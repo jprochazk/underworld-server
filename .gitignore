@@ -1,0 +1,20 @@
+# clang
+.clangd
+compile_commands.json
+
+# conan
+conan.lock
+conanbuildinfo.premake.lua
+conanbuildinfo.txt
+conaninfo.txt
+graph_info.json
+
+# gmake2
+*.make
+Makefile
+
+# binary
+bin
+
+# vscode
+.vscode
