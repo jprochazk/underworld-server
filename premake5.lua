@@ -10,7 +10,6 @@ function IsWindows()
 	return package.config:sub(1,1) == '\\'
 end
 
-
 -- Returns true if `file` exists
 function Exists(file)
     local ok, err, code = os.rename(file, file)
@@ -83,6 +82,37 @@ end
 -- .-----------. --
 -- |  ACTIONS  | --
 -- ^-----------^ --
+
+function Help()
+    Exit(0,
+"\
+Usage: premake5 [options] action\
+\
+ACTIONS:\
+    help                     Displays this message.\
+    clean                    Remove all binaries and generated files\
+    install                  Fetches and builds dependencies using conan.\
+    gmake2                   Generate GNU makefiles for POSIX, MinGW, and Cygwin\
+\
+OPTIONS:\
+    --build=MODE             Build mode; one of:\
+        debug                No optimization, debug symbols\
+        release              Optimization, no debug symbols\
+    --profile=CONAN_PROFILE  Which conan profile to use\
+    --verbose                Generate extra debug text output\
+    --version                Display version information\
+    --cc=VALUE               Choose a C/C++ compiler set; one of:\
+        clang                Clang (clang)\
+        gcc                  GNU GCC (gcc/g++)\
+        mingw                MinGW GCC (gcc/g++)\
+")
+end
+
+newaction {
+    trigger     = "help",
+    description = "Displays this message.",
+    execute     = Help
+}
 
 function CheckConan()
     -- Check for conan
@@ -169,7 +199,7 @@ function Main()
     end
 end
 
-if _ACTION ~= nil and _ACTION ~= "install" and _ACTION ~= "build" then
+if _ACTION ~= nil and _ACTION ~= "install" and _ACTION ~= "build" and _ACTION ~= "help" then
     Main()
 end
 
