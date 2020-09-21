@@ -88,23 +88,24 @@ function Help()
 "\
 Usage: premake5 [options] action\
 \
-ACTIONS:\
-    help                     Displays this message.\
-    clean                    Remove all binaries and generated files\
-    install                  Fetches and builds dependencies using conan.\
-    gmake2                   Generate GNU makefiles for POSIX, MinGW, and Cygwin\
-\
-OPTIONS:\
-    --build=MODE             Build mode; one of:\
-        debug                No optimization, debug symbols\
-        release              Optimization, no debug symbols\
-    --profile=CONAN_PROFILE  Which conan profile to use\
+Actions:\
+    help - Displays this message.\
+    clean - Remove all binaries and generated files\
+    gmake2 - Generate GNU makefiles for POSIX, MinGW, and Cygwin\
+        --cc=VALUE          Choose a C/C++ compiler\
+            clang           Clang (clang)\
+            gcc             GNU GCC (gcc/g++)\
+    install - Fetches and builds dependencies using conan.\
+        --build=MODE        Choose a build mode\
+            debug           Debug symbols\
+            release         Optimization\
+        --profile=PROFILE   Which conan profile to use when fetching dependencies.\
+                            Conan profiles can be used to store settings such as\
+                            which C++ compiler to use, which version of the\
+                            STL to use, etc, when fetching dependencies.\
+Other options:\
     --verbose                Generate extra debug text output\
     --version                Display version information\
-    --cc=VALUE               Choose a C/C++ compiler set; one of:\
-        clang                Clang (clang)\
-        gcc                  GNU GCC (gcc/g++)\
-        mingw                MinGW GCC (gcc/g++)\
 ")
 end
 
