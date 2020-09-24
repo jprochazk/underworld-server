@@ -107,6 +107,9 @@ public:
     // Sockets that encounter an error aren't closed.
     virtual void onError(uint32_t id, std::string_view what, beast::error_code error) override
     {
+        if (error == asio::error::operation_aborted || error == asio::error::connection_aborted ||
+            error == beast::websocket::error::closed)
+            return;
         util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> error: {}, {}", id, what, error.message());
     }
 };
