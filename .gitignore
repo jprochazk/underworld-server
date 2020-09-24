@@ -16,6 +16,7 @@ Makefile
 # binary
 bin
 obj
+server
 
 # vscode
 .vscode
