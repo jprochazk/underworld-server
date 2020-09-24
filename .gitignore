@@ -15,6 +15,10 @@ Makefile
 
 # binary
 bin
+obj
 
 # vscode
 .vscode
+
+# config
+config.json

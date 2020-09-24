@@ -32,3 +32,5 @@ $ make
 ```
 
 Which will build and place the binary into the `bin` directory.
+
+Before running, optionally create a `config.json` out of `config.example.json`, and fill any values you prefer. The `config.example.json` values are used as defaults in case one or more values are missing.

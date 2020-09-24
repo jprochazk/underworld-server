@@ -90,7 +90,7 @@ Usage: premake5 [options] action\
 \
 Actions:\
     help - Displays this message.\
-    clean - Remove all binaries and generated files\
+    clean - Cleans generated conan & premake files.\
     gmake2 - Generate GNU makefiles for POSIX, MinGW, and Cygwin\
         --cc=VALUE          Choose a C/C++ compiler\
             clang           Clang (clang)\
@@ -158,6 +158,25 @@ newaction {
     execute     = Install
 }
 
+function Clean()
+    if Exists("Makefile") then os.execute("make clean") end
+    local files = {"Makefile", "graph_info.json", "server.make", "server", "conaninfo.txt", "conanbuildinfo.txt", "conanbuildinfo.premake.lua", "conan.lock", "compile_commands.json"}
+    for _, file in ipairs(files) do
+        RemoveFile(file)
+    end
+
+    local dirs = {"bin", "obj"}
+    for _, dir in ipairs(dirs) do
+        RemoveDir(dir)
+    end
+end
+
+newaction {
+    trigger = "clean",
+    description = "Cleans generated conan & premake files.",
+    execute = Clean
+}
+
 function Main()
     include "./conanbuildinfo.premake.lua"
 
@@ -172,10 +191,10 @@ function Main()
     conan_basic_setup()
 
     -- Executable "GameServer"
-    project "GameServer"
+    project "server"
     kind "ConsoleApp"
-    targetdir "bin/"
-    objdir "bin/obj"
+    targetdir "./"
+    objdir "./obj"
 
     files {
         "src/**.h",
