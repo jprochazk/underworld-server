@@ -1,5 +1,5 @@
-#ifndef SERVER_JSON_HPP_
-#define SERVER_JSON_HPP_
+#ifndef SERVER_UTIL_JSON_HPP_
+#define SERVER_UTIL_JSON_HPP_
 
 #include "log.hpp"
 #include <fstream>
@@ -149,4 +149,4 @@ json inline LoadJson(const std::string& path)
 
 } // namespace util
 
-#endif // SERVER_JSON_HPP_
+#endif // SERVER_UTIL_JSON_HPP_

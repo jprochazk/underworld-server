@@ -1,5 +1,5 @@
-#ifndef SERVER_FILE_HPP_
-#define SERVER_FILE_HPP_
+#ifndef SERVER_UTIL_FILE_HPP_
+#define SERVER_UTIL_FILE_HPP_
 
 #include "log.hpp"
 #include <boost/beast.hpp>
@@ -34,4 +34,4 @@ LoadFile(const std::string& path, std::string& out)
 
 } // namespace util
 
-#endif // SERVER_FILE_HPP_
+#endif // SERVER_UTIL_FILE_HPP_

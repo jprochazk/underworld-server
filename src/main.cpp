@@ -1,9 +1,12 @@
 
+#include "net/listener.hpp"
 #include "net/net.hpp"
 #include "util/json.hpp"
 #include "util/log.hpp"
+#include "util/thread.hpp"
 #include "util/time.hpp"
 #include <iostream>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -37,54 +40,102 @@ LoadConfig(const std::string& path = "config.json")
 // and come up with a proper way to
 // start and stop network threads
 
+std::map<int, std::string> signals = {
+    { 1, "SIGHUP" },     { 2, "SIGINT" },   { 3, "SIGQUIT" },   { 4, "SIGILL" },   { 5, "SIGTRAP" },
+    { 6, "SIGABRT" },    { 7, "SIGBUS" },   { 8, "SIGFPE" },    { 9, "SIGKILL" },  { 10, "SIGUSR1" },
+    { 11, "SIGSEGV" },   { 12, "SIGUSR2" }, { 13, "SIGPIPE" },  { 14, "SIGALRM" }, { 15, "SIGTERM" },
+    { 16, "SIGSTKFLT" }, { 17, "SIGCLD" },  { 18, "SIGCONT" },  { 19, "SIGSTOP" }, { 20, "SIGTSTP" },
+    { 21, "SIGTTIN" },   { 22, "SIGTTOU" }, { 23, "SIGURG" },   { 24, "SIGXCPU" }, { 25, "SIGXFSZ" },
+    { 26, "SIGVTALRM" }, { 27, "SIGPROF" }, { 28, "SIGWINCH" }, { 29, "SIGIO" },   { 30, "SIGPWR" },
+    { 31, "SIGSYS" },
+};
+
+std::atomic<bool> ShouldExit = false;
+void
+HandleSignal(const boost::system::error_code& ec, int signalNum)
+{
+    if (!ec) {
+        util::log::Info("HandleSignal", "Signal {}", signals[signalNum]);
+        ShouldExit = true;
+    }
+}
+
+namespace net {
+
+class Context
+{
+    asio::io_context& ioc_;
+    std::vector<util::ScopedThread> threads_;
+    std::shared_ptr<Listener> listener_;
+    std::shared_ptr<Handler> handler_;
+
+    std::string address_;
+    uint16_t port_;
+    uint8_t numThreads_;
+
+public:
+    Context(asio::io_context& ioc,
+            std::string address,
+            uint16_t port,
+            uint8_t numThreads,
+            std::shared_ptr<Handler> handler)
+      : ioc_{ ioc }
+      , threads_{ numThreads }
+      , listener_{ nullptr }
+      , handler_{ handler }
+      , address_{ address }
+      , port_{ port }
+      , numThreads_{ numThreads }
+    {}
+
+    void start()
+    {
+        listener_ = CreateListener(ioc_, tcp::endpoint{ asio::ip::make_address(address_), port_ }, handler_);
+        listener_->open();
+
+        threads_.clear();
+        threads_.reserve(numThreads_);
+        for (size_t i = 0; i < numThreads_; i++) {
+            util::log::Info("Network", "Starting thread #{}", i + 1);
+            threads_.emplace_back([&] { ioc_.run(); });
+        }
+    }
+};
+
+} // namespace net
+
 int
 main()
 {
+    util::log::SetLevel(util::log::Level::Trace);
     const auto config = util::LoadConfig();
 
-    net::Context{ config.address, config.port, config.threads };
+    asio::io_context ioc;
+    asio::signal_set signals(ioc, SIGINT, SIGTERM);
+    signals.async_wait(HandleSignal);
 
+    net::Context context{ ioc, config.address, config.port, config.threads, {} };
+    context.start();
+
+    // Server will live for 30 seconds and then shutdown
+    // During this time, sockets may connect and send messages.
     auto ticks = 30;
-    // time is in seconds
     auto last = util::time::Now();
-    while (true) {
+    while (!ShouldExit) {
+        // 1 tick = 1000 ms
         auto now = util::time::Now();
-        auto diff = (util::time::Now() - last).count();
+        auto diff = (now - last).count();
         if (diff < 1000)
             continue;
+
+        last = now;
 
         util::log::Info("main", "Ticks remaining: {}", ticks);
         if (ticks-- == 0) {
             util::log::Info("main", "Shutting down...");
             break;
         }
-        last = now;
     }
+
+    ioc.stop();
 }
-
-/* int
-main()
-{
-    util::log::SetLevel(util::log::Level::Trace);
-
-    // Check command line arguments.
-    const auto config = util::LoadConfig();
-
-    // The io_context is required for all I/O
-    asio::io_context ioc;
-
-    // Create and launch a listening port
-    auto endpoint = tcp::endpoint{ asio::ip::make_address(config.address), config.port };
-    util::log::Info("main", "Server: address: {}, port: {}", endpoint.address().to_string(), endpoint.port());
-    net::CreateListener(ioc, endpoint, {})->open();
-    ioc.run();
-
-    // Run the I/O service on the requested number of threads
-    // std::vector<std::thread> v;
-    // v.reserve(config.threads - 1);
-    // for (auto i = config.threads - 1; i > 0; --i)
-    //    v.emplace_back([&ioc] { ioc.run(); });
-    // ioc.run();
-
-    return EXIT_SUCCESS;
-} */

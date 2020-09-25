@@ -1,5 +1,5 @@
-#ifndef SERVER_LOG_HPP_
-#define SERVER_LOG_HPP_
+#ifndef SERVER_UTIL_LOG_HPP_
+#define SERVER_UTIL_LOG_HPP_
 
 #include <spdlog/spdlog.h>
 #include <type_traits>
@@ -73,4 +73,4 @@ Trace(const std::string& origin, const std::string& format, Args&&... args)
 } // namespace log
 } // namespace util
 
-#endif // SERVER_LOG_HPP_
+#endif // SERVER_UTIL_LOG_HPP_

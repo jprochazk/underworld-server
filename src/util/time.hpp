@@ -1,5 +1,5 @@
-#ifndef SERVER_TIME_HPP_
-#define SERVER_TIME_HPP_
+#ifndef SERVER_UTIL_TIME_HPP_
+#define SERVER_UTIL_TIME_HPP_
 
 #include <chrono>
 #include <cstddef>
@@ -45,18 +45,7 @@ Now()
       std::chrono::duration_cast<Duration>(Clock::now().time_since_epoch())) };
 }
 
-// inline std::string
-// to_string(const Instant& t)
-//{
-//    auto tm_snapshot = detail::localtime(std::chrono::system_clock::to_time_t(
-//      std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration>(
-//        std::chrono::duration_cast<std::chrono::system_clock::duration>(t.time_since_epoch()))));
-//    char buffer[32];
-//    std::strftime(buffer, sizeof(buffer), "%F %T %z", &tm_snapshot);
-//    return buffer;
-//}
-
 } // namespace time
 } // namespace util
 
-#endif // SERVER_TIME_HPP_
+#endif // SERVER_UTIL_TIME_HPP_
