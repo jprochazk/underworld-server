@@ -109,13 +109,12 @@ private:
 
         // metrics::read(read_bytes);
 
-        // min message size is 2 bytes (sizeof opcode)
-        if (readBytes > 1) {
-            std::vector<uint8_t> buf(readBytes);
-            boost::asio::buffer_copy(boost::asio::buffer(buf.data(), readBytes), readBuffer_.data());
+        // std::vector<uint8_t> buf(readBytes);
+        // boost::asio::buffer_copy(boost::asio::buffer(buf.data(), readBytes), readBuffer_.data());
+        // handler_->onMessage(id_, std::move(buf));
 
-            handler_->onMessage(id_, std::move(buf));
-        }
+        auto buffer = readBuffer_.data();
+        handler_->onMessage(id_, buffer.size(), static_cast<uint8_t*>(buffer.data()));
         readBuffer_.consume(readBytes);
 
         stream_.async_read(readBuffer_, beast::bind_front_handler(&SocketImpl::onRead, shared_from_this()));

@@ -89,23 +89,20 @@ private:
     }
 }; // class ListenerImpl
 
-class DefaultHandlerImpl : public Handler
+class DefaultHandlerImpl final : public Handler
 {
 public:
-    virtual void onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
+    void onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
     {
         util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> open", id);
     }
-    virtual void onClose(uint32_t id) override
+    void onClose(uint32_t id) override { util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> close", id); }
+    void onMessage(uint32_t id, size_t size, uint8_t* /* data */) override
     {
-        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> close", id);
-    }
-    virtual void onMessage(uint32_t id, std::vector<uint8_t>&& data) override
-    {
-        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> message size {}", id, data.size());
+        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> message size {}", id, size);
     }
     // Sockets that encounter an error aren't closed.
-    virtual void onError(uint32_t id, std::string_view what, beast::error_code error) override
+    void onError(uint32_t id, std::string_view what, beast::error_code error) override
     {
         if (error == asio::error::operation_aborted || error == asio::error::connection_aborted ||
             error == beast::websocket::error::closed)

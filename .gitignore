@@ -17,6 +17,7 @@ Makefile
 bin
 obj
 server
+tests
 
 # vscode
 .vscode

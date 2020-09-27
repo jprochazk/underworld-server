@@ -1,6 +1,7 @@
 
 #include "net/listener.hpp"
 #include "net/net.hpp"
+#include "net/packet.hpp"
 #include "util/json.hpp"
 #include "util/log.hpp"
 #include "util/thread.hpp"
@@ -8,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <moodycamel/concurrentqueue.h>
 #include <optional>
 #include <string>
 
@@ -86,9 +88,6 @@ public:
       , address_{ address }
       , port_{ port }
       , numThreads_{ numThreads }
-    {}
-
-    void start()
     {
         listener_ = CreateListener(ioc_, tcp::endpoint{ asio::ip::make_address(address_), port_ }, handler_);
         listener_->open();
@@ -100,9 +99,70 @@ public:
             threads_.emplace_back([&] { ioc_.run(); });
         }
     }
+
+    ~Context() { ioc_.stop(); }
 };
 
 } // namespace net
+
+enum class Opcode : uint16_t
+{
+    Test1,
+    Test2
+};
+
+struct Test1Packet
+{
+    uint32_t value;
+};
+
+struct Test2Packet
+{
+    uint16_t value;
+};
+
+class TestHandler final : public net::Handler
+{
+public:
+    void onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
+    {
+        util::log::Info("TestHandler", "Socket #{} -> open", id);
+    }
+    void onClose(uint32_t id) override { util::log::Info("TestHandler", "Socket #{} -> close", id); }
+    void onMessage(uint32_t id, size_t size, uint8_t* data) override
+    {
+        Opcode opcode;
+        if (net::Deserialize(size, data, &opcode)) {
+            switch (opcode) {
+                case Opcode::Test1: {
+                    Test1Packet packet;
+                    if (net::Deserialize(size - sizeof(Opcode), data + sizeof(Opcode), &packet)) {
+                        util::log::Info(
+                          "TestHandler", "Socket #{} -> Test1Packet {{ uint32_t value : {} }}", id, packet.value);
+                    }
+                    break;
+                }
+                case Opcode::Test2: {
+                    Test2Packet packet;
+                    if (net::Deserialize(size - sizeof(Opcode), data + sizeof(Opcode), &packet)) {
+                        util::log::Info(
+                          "TestHandler", "Socket #{} -> Test2Packet {{ uint16_t value : {} }}", id, packet.value);
+                    }
+                }
+                default:
+                    break;
+            }
+        }
+    }
+    // Sockets that encounter an error aren't closed.
+    void onError(uint32_t id, std::string_view what, beast::error_code error) override
+    {
+        if (error == asio::error::operation_aborted || error == asio::error::connection_aborted ||
+            error == beast::websocket::error::closed)
+            return;
+        util::log::Info("TestHandler", "Socket #{} -> error: {}, {}", id, what, error.message());
+    }
+};
 
 int
 main()
@@ -114,12 +174,10 @@ main()
     asio::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(HandleSignal);
 
-    net::Context context{ ioc, config.address, config.port, config.threads, {} };
-    context.start();
+    net::Context context{ ioc, config.address, config.port, config.threads, std::make_shared<TestHandler>() };
 
     // Server will live for 30 seconds and then shutdown
     // During this time, sockets may connect and send messages.
-    auto ticks = 30;
     auto last = util::time::Now();
     while (!ShouldExit) {
         // 1 tick = 1000 ms
@@ -129,13 +187,5 @@ main()
             continue;
 
         last = now;
-
-        util::log::Info("main", "Ticks remaining: {}", ticks);
-        if (ticks-- == 0) {
-            util::log::Info("main", "Shutting down...");
-            break;
-        }
     }
-
-    ioc.stop();
 }

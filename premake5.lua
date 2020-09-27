@@ -95,6 +95,7 @@ Actions:\
         --cc=VALUE          Choose a C/C++ compiler\
             clang           Clang (clang)\
             gcc             GNU GCC (gcc/g++)\
+        --tests=VALUE       Build tests\
     install - Fetches and builds dependencies using conan.\
         --build=MODE        Choose a build mode\
             debug           Debug symbols\
@@ -160,7 +161,7 @@ newaction {
 
 function Clean()
     if Exists("Makefile") then os.execute("make clean") end
-    local files = {"Makefile", "graph_info.json", "server.make", "server", "conaninfo.txt", "conanbuildinfo.txt", "conanbuildinfo.premake.lua", "conan.lock", "compile_commands.json"}
+    local files = {"Makefile", "graph_info.json", "server.make", "server", "tests.make", "tests", "conaninfo.txt", "conanbuildinfo.txt", "conanbuildinfo.premake.lua", "conan.lock", "compile_commands.json"}
     for _, file in ipairs(files) do
         RemoveFile(file)
     end
@@ -177,10 +178,10 @@ newaction {
     execute = Clean
 }
 
-function Main()
+function Common()
     include "./conanbuildinfo.premake.lua"
 
-    workspace "Platformer"
+    workspace "Binary"
     location "./"
 
     -- runtime == "Debug" or "Release"
@@ -189,8 +190,10 @@ function Main()
     cppdialect "C++17"
 
     conan_basic_setup()
+end
 
-    -- Executable "GameServer"
+function Binary()
+    -- Executable "server"
     project "server"
     kind "ConsoleApp"
     targetdir "./"
@@ -219,7 +222,58 @@ function Main()
     end
 end
 
-if _ACTION ~= nil and _ACTION ~= "install" and _ACTION ~= "build" and _ACTION ~= "help" then
-    Main()
+function Tests()
+    -- Executable "tests"
+    project "tests"
+    kind "ConsoleApp"
+    targetdir "./"
+    objdir "./obj"
+
+    files {
+        "src/**.h",
+        "src/**.cpp",
+        "test/**.cpp"
+    }
+
+    excludes {
+        "src/main.cpp"
+    }
+
+    includedirs {
+        "src",
+        "test",
+        "vendor"
+    }
+
+    buildoptions {
+        "-Wall",
+        "-Wextra"
+    }
+
+    if conan_build_type == "Debug" then
+        symbols "On"
+    else
+        defines { "NDEBUG" }
+        optimize "On"
+    end
+end
+
+newoption {
+    trigger     = "tests",
+    value       = "VALUE",
+    description = "Build tests",
+    allowed = {
+        { "true", "" },
+        { "false", "" },
+    }
+}
+
+if _ACTION ~= nil and _ACTION ~= "install" and _ACTION ~= "build" and _ACTION ~= "help" and _ACTION ~= "clean" then
+    Common()
+    Binary()
+
+    if GetOptionStrDefault("tests", "false") == "true" then
+        Tests()
+    end
 end
 
