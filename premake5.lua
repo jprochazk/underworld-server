@@ -95,7 +95,6 @@ Actions:\
         --cc=VALUE          Choose a C/C++ compiler\
             clang           Clang (clang)\
             gcc             GNU GCC (gcc/g++)\
-        --tests=VALUE       Build tests\
     install - Fetches and builds dependencies using conan.\
         --build=MODE        Choose a build mode\
             debug           Debug symbols\
@@ -258,22 +257,9 @@ function Tests()
     end
 end
 
-newoption {
-    trigger     = "tests",
-    value       = "VALUE",
-    description = "Build tests",
-    allowed = {
-        { "true", "" },
-        { "false", "" },
-    }
-}
-
 if _ACTION ~= nil and _ACTION ~= "install" and _ACTION ~= "build" and _ACTION ~= "help" and _ACTION ~= "clean" then
     Common()
     Binary()
-
-    if GetOptionStrDefault("tests", "false") == "true" then
-        Tests()
-    end
+    Tests()
 end
 
