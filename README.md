@@ -15,22 +15,39 @@ $ premake5 --version
 $ conan --version
 ```
 
-### Build
-
-Currently, only Linux is supported. Windows/MacOS support is not planned.
-
 To see the list of available commands and options, execute:
 ```
 $ premake5 help
 ```
 
-To build, execute:
+### Build
+
+Currently, only Linux is supported. Windows/MacOS support is not planned.
+
+To build, execute the following:
 ```
 $ premake5 install
 $ premake5 gmake2
-$ make
+$ make server
 ```
 
-Which will build and place the binary into the `bin` directory.
+Before running, optionally initialize the config:
+```
+$ cp config.example.json config.json
+```
+And fill in values as needed.
 
-Before running, optionally create a `config.json` out of `config.example.json`, and fill any values you prefer. The `config.example.json` values are used as defaults in case one or more values are missing.
+Finally, the server can be run as:
+```
+$ ./server
+```
+Which will start the server on the requested address/port, with the requested number of threads.
+
+### Tests
+
+Tests are written using [GoogleTest](https://github.com/google/googletest).
+
+```
+$ make tests
+$ ./tests
+```
