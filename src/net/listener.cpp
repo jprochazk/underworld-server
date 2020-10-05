@@ -23,9 +23,6 @@ public:
       , handler_{ handler }
       , idseq_{ 0 }
     {
-        // if (!handler_) {
-        //    handler_ = std::make_shared<default_socket_handler>();
-        //}
 
         beast::error_code ec;
 
@@ -40,6 +37,9 @@ public:
             fail("Failed to set option \"reuse_address\"", ec);
             return;
         }
+
+        // Disable Nagle's algorithm (packets are sent immediately, instead of waiting for a full buffer)
+        acceptor_.set_option(asio::ip::tcp::no_delay{ true });
 
         acceptor_.bind(endpoint, ec);
         if (ec) {
@@ -56,7 +56,8 @@ public:
         util::log::Trace("ListenerImpl", "Listener is initialized");
     }
 
-    virtual void open() override
+    virtual void
+    open() override
     {
         util::log::Trace("ListenerImpl", "Opening listener port");
         // start the accept loop
@@ -65,7 +66,8 @@ public:
     }
 
 private:
-    void fail(std::string_view what, beast::error_code ec)
+    void
+    fail(std::string_view what, beast::error_code ec)
     {
         // if (ec == asio::error::operation_aborted || ec == asio::error::connection_aborted ||
         //    ec == beast::websocket::error::closed)
@@ -74,7 +76,8 @@ private:
         util::log::Error("ListenerImpl", "{}: {}", what, ec.message());
     }
 
-    void onAccept(beast::error_code ec, tcp::socket socket)
+    void
+    onAccept(beast::error_code ec, tcp::socket socket)
     {
         util::log::Trace("ListenerImpl::onAccept", "Got socket");
 
@@ -92,24 +95,34 @@ private:
 class DefaultHandlerImpl final : public Handler
 {
 public:
-    void onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
+    void
+    onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
     {
         util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> open", id);
     }
-    void onClose(uint32_t id) override { util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> close", id); }
-    void onMessage(uint32_t id, size_t size, uint8_t* /* data */) override
+
+    void
+    onClose(uint32_t id) override
+    {
+        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> close", id);
+    }
+
+    void
+    onMessage(uint32_t id, uint8_t* /* data */, size_t size) override
     {
         util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> message size {}", id, size);
     }
+
     // Sockets that encounter an error aren't closed.
-    void onError(uint32_t id, std::string_view what, beast::error_code error) override
+    void
+    onError(uint32_t id, std::string_view what, beast::error_code error) override
     {
         if (error == asio::error::operation_aborted || error == asio::error::connection_aborted ||
             error == beast::websocket::error::closed)
             return;
         util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> error: {}, {}", id, what, error.message());
     }
-};
+}; // class DefaultHandlerImpl
 
 std::shared_ptr<Listener>
 CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Handler> handler)

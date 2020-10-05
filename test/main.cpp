@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include "endian_test.h"
+//#include "endian_test.h"
 
 int
 main(int argc, char** argv)

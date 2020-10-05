@@ -18,7 +18,7 @@ public:
     virtual void onOpen(uint32_t id, std::weak_ptr<Socket> socket) = 0;
     virtual void onClose(uint32_t id) = 0;
     /// virtual void onMessage(uint32_t id, std::vector<uint8_t>&& data) = 0;
-    virtual void onMessage(uint32_t id, size_t size, uint8_t* data) = 0;
+    virtual void onMessage(uint32_t id, uint8_t* data, size_t size) = 0;
     // Sockets that encounter an error aren't closed.
     virtual void onError(uint32_t id, std::string_view what, beast::error_code error) = 0;
 }; // class Handler

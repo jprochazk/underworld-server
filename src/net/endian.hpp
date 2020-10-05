@@ -79,6 +79,7 @@
 #    define ENDIAN_INTRINSIC_MSG "no byte swap intrinsics"
 #endif // ENDIAN_NO_INTRINSICS
 
+#include "util/log.hpp"
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -246,7 +247,7 @@ inline void network_order_array(T (&x)[N]) noexcept
 
 template<class T>
 inline void
-network_order_range(std::size_t size, T* data) noexcept
+network_order_range(T* data, std::size_t size) noexcept
 {
     for (std::size_t i = 0; i < size; ++i) {
         network_order(data[i]);
@@ -258,6 +259,11 @@ inline void
 native_order(T& x) noexcept
 {
 #if NATIVE_ORDER != NETWORK_ORDER
+    if constexpr (std::is_enum_v<T>) {
+        if constexpr (std::is_same_v<std::underlying_type_t<T>, uint16_t>) {
+            util::log::Info("TEST", "It's uint16_t...");
+        }
+    }
     reverse_inplace(x);
 #else
     (void)x;
@@ -274,12 +280,22 @@ inline void native_order_array(T (&x)[N]) noexcept
 
 template<class T>
 inline void
-native_order_range(std::size_t size, T* data) noexcept
+native_order_range(T* data, std::size_t size) noexcept
 {
     for (std::size_t i = 0; i < size; ++i) {
         native_order(data[i]);
     }
 }
+
+struct native_swap
+{
+    template<typename T>
+    inline void
+    operator()(T& t) const
+    {
+        native_order(t);
+    }
+};
 
 } // namespace endian
 

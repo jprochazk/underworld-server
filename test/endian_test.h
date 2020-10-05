@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include "endian.hpp"
+#include "net/endian.hpp"
 
 TEST(Endian, Convert_Unsigned)
 {

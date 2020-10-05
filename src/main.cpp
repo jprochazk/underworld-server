@@ -2,10 +2,12 @@
 #include "net/listener.hpp"
 #include "net/net.hpp"
 #include "net/packet.hpp"
+#include "server/session.hpp"
 #include "util/json.hpp"
 #include "util/log.hpp"
 #include "util/thread.hpp"
 #include "util/time.hpp"
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -42,7 +44,7 @@ LoadConfig(const std::string& path = "config.json")
 // and come up with a proper way to
 // start and stop network threads
 
-std::map<int, std::string> signals = {
+std::map<size_t, std::string> signals = {
     { 1, "SIGHUP" },     { 2, "SIGINT" },   { 3, "SIGQUIT" },   { 4, "SIGILL" },   { 5, "SIGTRAP" },
     { 6, "SIGABRT" },    { 7, "SIGBUS" },   { 8, "SIGFPE" },    { 9, "SIGKILL" },  { 10, "SIGUSR1" },
     { 11, "SIGSEGV" },   { 12, "SIGUSR2" }, { 13, "SIGPIPE" },  { 14, "SIGALRM" }, { 15, "SIGTERM" },
@@ -105,76 +107,20 @@ public:
 
 } // namespace net
 
-enum class Opcode : uint16_t
-{
-    Test1,
-    Test2
-};
-
-struct Test1Packet
-{
-    uint32_t value;
-};
-
-struct Test2Packet
-{
-    uint16_t value;
-};
-
-class TestHandler final : public net::Handler
-{
-public:
-    void onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
-    {
-        util::log::Info("TestHandler", "Socket #{} -> open", id);
-    }
-    void onClose(uint32_t id) override { util::log::Info("TestHandler", "Socket #{} -> close", id); }
-    void onMessage(uint32_t id, size_t size, uint8_t* data) override
-    {
-        Opcode opcode;
-        if (net::Deserialize(size, data, &opcode)) {
-            switch (opcode) {
-                case Opcode::Test1: {
-                    Test1Packet packet;
-                    if (net::Deserialize(size - sizeof(Opcode), data + sizeof(Opcode), &packet)) {
-                        util::log::Info(
-                          "TestHandler", "Socket #{} -> Test1Packet {{ uint32_t value : {} }}", id, packet.value);
-                    }
-                    break;
-                }
-                case Opcode::Test2: {
-                    Test2Packet packet;
-                    if (net::Deserialize(size - sizeof(Opcode), data + sizeof(Opcode), &packet)) {
-                        util::log::Info(
-                          "TestHandler", "Socket #{} -> Test2Packet {{ uint16_t value : {} }}", id, packet.value);
-                    }
-                }
-                default:
-                    break;
-            }
-        }
-    }
-    // Sockets that encounter an error aren't closed.
-    void onError(uint32_t id, std::string_view what, beast::error_code error) override
-    {
-        if (error == asio::error::operation_aborted || error == asio::error::connection_aborted ||
-            error == beast::websocket::error::closed)
-            return;
-        util::log::Info("TestHandler", "Socket #{} -> error: {}, {}", id, what, error.message());
-    }
-};
-
 int
 main()
 {
-    util::log::SetLevel(util::log::Level::Trace);
+    util::log::SetLevel(util::log::Level::Info);
     const auto config = util::LoadConfig();
 
     asio::io_context ioc;
     asio::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(HandleSignal);
 
-    net::Context context{ ioc, config.address, config.port, config.threads, std::make_shared<TestHandler>() };
+    auto sessionMgr = server::CreateSessionManager();
+    net::Context context{ ioc, config.address, config.port, config.threads, sessionMgr };
+
+    util::log::Info("main", "Server is ready, starting main loop...");
 
     // Server will live for 30 seconds and then shutdown
     // During this time, sockets may connect and send messages.
@@ -187,5 +133,7 @@ main()
             continue;
 
         last = now;
+
+        sessionMgr->update();
     }
 }

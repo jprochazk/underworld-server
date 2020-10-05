@@ -39,7 +39,8 @@ public:
         handler_->onClose(id_);
     }
 
-    virtual void open() override
+    virtual void
+    open() override
     {
         if (isOpen())
             return;
@@ -60,7 +61,8 @@ public:
         stream_.async_accept(beast::bind_front_handler(&SocketImpl::onAccept, shared_from_this()));
     }
 
-    virtual void close() override
+    virtual void
+    close() override
     {
         if (isOpen())
             return;
@@ -70,9 +72,10 @@ public:
                             beast::bind_front_handler(&SocketImpl::onClose, shared_from_this()));
     }
 
-    virtual void send(std::vector<uint8_t> data) override
+    virtual void
+    send(std::vector<uint8_t> data) override
     {
-        if (isOpen())
+        if (!isOpen())
             return;
 
         util::log::Trace("SocketImpl::send", "Sending {} bytes to socket ID {}", data.size(), id_);
@@ -80,11 +83,20 @@ public:
                    beast::bind_front_handler(&SocketImpl::onSend, shared_from_this(), std::move(data)));
     }
 
-    virtual uint32_t getId() override { return id_; }
-    virtual bool isOpen() override { return open_; }
+    virtual uint32_t
+    getId() override
+    {
+        return id_;
+    }
+    virtual bool
+    isOpen() override
+    {
+        return open_;
+    }
 
 private:
-    void onAccept(beast::error_code ec)
+    void
+    onAccept(beast::error_code ec)
     {
         if (ec)
             return handler_->onError(id_, "Socket::onAccept", ec);
@@ -95,14 +107,16 @@ private:
         stream_.async_read(readBuffer_, beast::bind_front_handler(&SocketImpl::onRead, shared_from_this()));
     }
 
-    void onClose(beast::error_code ec)
+    void
+    onClose(beast::error_code ec)
     {
         open_ = false;
         if (ec)
             return handler_->onError(id_, "Socket::onClose", ec);
     }
 
-    void onRead(beast::error_code ec, std::size_t readBytes)
+    void
+    onRead(beast::error_code ec, std::size_t readBytes)
     {
         if (ec)
             return handler_->onError(id_, "Socket::onRead", ec);
@@ -114,13 +128,14 @@ private:
         // handler_->onMessage(id_, std::move(buf));
 
         auto buffer = readBuffer_.data();
-        handler_->onMessage(id_, buffer.size(), static_cast<uint8_t*>(buffer.data()));
+        handler_->onMessage(id_, static_cast<uint8_t*>(buffer.data()), buffer.size());
         readBuffer_.consume(readBytes);
 
         stream_.async_read(readBuffer_, beast::bind_front_handler(&SocketImpl::onRead, shared_from_this()));
     }
 
-    void onSend(std::vector<uint8_t>&& data)
+    void
+    onSend(std::vector<uint8_t>&& data)
     {
         writeBuffer_.push_back(std::move(data));
 
@@ -132,7 +147,8 @@ private:
                             beast::bind_front_handler(&SocketImpl::onWrite, shared_from_this()));
     }
 
-    void onWrite(beast::error_code ec, std::size_t /* writtenBytes */)
+    void
+    onWrite(beast::error_code ec, std::size_t /* writtenBytes */)
     {
         if (ec)
             return handler_->onError(id_, "Socket::onWrite", ec);
