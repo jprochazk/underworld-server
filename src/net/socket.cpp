@@ -40,7 +40,7 @@ public:
     }
 
     virtual void
-    open() override
+    open(http::request<http::string_body> req, std::string token) override
     {
         if (isOpen())
             return;
@@ -51,6 +51,9 @@ public:
             res.set(http::field::server, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-server");
         }));
 
+        stream_.set_option(beast::websocket::stream_base::decorator(
+          [&](beast::websocket::response_type& res) { res.set(http::field::sec_websocket_protocol, token); }));
+
         // any message above MAX_MESSAGE_SIZE bytes will be discarded
         stream_.read_message_max(MAX_MESSAGE_SIZE);
 
@@ -58,7 +61,7 @@ public:
 
         open_ = true;
 
-        stream_.async_accept(beast::bind_front_handler(&SocketImpl::onAccept, shared_from_this()));
+        stream_.async_accept(req, beast::bind_front_handler(&SocketImpl::onAccept, shared_from_this()));
     }
 
     virtual void

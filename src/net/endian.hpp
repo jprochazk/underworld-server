@@ -287,16 +287,6 @@ native_order_range(T* data, std::size_t size) noexcept
     }
 }
 
-struct native_swap
-{
-    template<typename T>
-    inline void
-    operator()(T& t) const
-    {
-        native_order(t);
-    }
-};
-
 } // namespace endian
 
 #endif // SERVER_ENDIAN_HPP_

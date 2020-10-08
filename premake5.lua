@@ -210,7 +210,8 @@ function Binary()
 
     buildoptions {
         "-Wall",
-        "-Wextra"
+        "-Wextra",
+        "-Wno-unused-parameter"
     }
 
     if conan_build_type == "Debug" then
@@ -246,7 +247,8 @@ function Tests()
 
     buildoptions {
         "-Wall",
-        "-Wextra"
+        "-Wextra",
+        "-Wno-unused-parameter"
     }
 
     if conan_build_type == "Debug" then

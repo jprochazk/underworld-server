@@ -110,7 +110,7 @@ public:
 int
 main()
 {
-    util::log::SetLevel(util::log::Level::Info);
+    util::log::SetLevel(util::log::Level::Trace);
     const auto config = util::LoadConfig();
 
     asio::io_context ioc;
