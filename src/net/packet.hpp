@@ -20,15 +20,19 @@ public:
       : cursor_{ 0 }
       , buffer_{}
     {}
+    // Move-construct from a std::vector
     Packet(std::vector<uint8_t>&& buffer)
       : cursor_{ 0 }
       , buffer_{ std::move(buffer) }
     {}
+    // Copy-construct from a range
     Packet(uint8_t* data, size_t size)
       : cursor_{ 0 }
       , buffer_{ data, data + size }
     {}
 
+    // Overload for deserializing fundamental types (int, float, etc) 
+    // or POD types (standard layout and trivially constructible, such as C-structs)
     template<typename T>
     friend Packet&
     operator>>(Packet& packet, T& data)
@@ -36,11 +40,20 @@ public:
         static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
 
         if constexpr (std::is_fundamental_v<T>) {
+            // if we're deserializing a fundamental type
+            // copy the data from the internal buffer
             std::memcpy(&data, packet.buffer_.data() + packet.cursor_, sizeof(T));
+            // reverse its endianness if on a little-endian platform
             endian::reverse_inplace(data);
+            // move the cursor forward
             packet.cursor_ += sizeof(T);
         } else if constexpr (std::is_pod_v<T>) {
+            // if we're deserializing a POD type
+            // iterate over each field in the POD - this can be a tuple, a plain array, or a struct
+            // deserializing each field individually
             boost::pfr::for_each_field(data, [&](auto& value) {
+                // TODO: de-duplicate this code
+                // doing the same as above, with sizeof(value) instead of sizeof(T)
                 std::memcpy(&value, packet.buffer_.data() + packet.cursor_, sizeof(value));
                 endian::reverse_inplace(value);
                 packet.cursor_ += sizeof(value);
@@ -56,16 +69,24 @@ public:
     {
         static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
 
+        // If we don't have enough space, allocate more
         if (packet.buffer_.size() - packet.cursor_ < sizeof(T)) {
             packet.buffer_.resize(packet.cursor_ + sizeof(T));
         }
 
         if constexpr (std::is_fundamental_v<T>) {
+            // If we're serializing a fundamental type
+            // copy the value into the internal buffer
             std::memcpy(packet.buffer_.data() + packet.cursor_, &data, sizeof(T));
+            // convert the endianness of what we just copied into the buffer
+            // here we're aliasing the buffer data pointer
             endian::reverse_inplace(*(reinterpret_cast<T*>(packet.buffer_.data() + packet.cursor_)));
+            // move the cursor forward
             packet.cursor_ += sizeof(T);
         } else if constexpr (std::is_pod_v<T>) {
             boost::pfr::for_each_field(data, [&](const auto& value) {
+                // TODO: de-duplicate this code
+                // doing the same thing as above, just with sizeof(value) instead of sizeof(T)
                 std::memcpy(packet.buffer_.data() + packet.cursor_, &value, sizeof(value));
                 endian::reverse_inplace(
                   *(reinterpret_cast<std::remove_const_t<std::remove_reference_t<decltype(value)>>*>(
@@ -77,10 +98,18 @@ public:
         return packet;
     }
 
+    // Returns the internal cursor position
     size_t
     cursor() const
     {
         return cursor_;
+    }
+
+    // Set the internal cursor position (at your own peril)
+    size_t
+    cursor(size_t pos)
+    {
+        return cursor_ = pos;
     }
 
     // Analogous to `std::vector<uint8_t>::size() const`
