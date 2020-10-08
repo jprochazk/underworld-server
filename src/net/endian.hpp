@@ -7,7 +7,7 @@
  *
  * Much of this code is originally from Boost.Endian
  * Original work Copyright (c) 2019 Peter Dimov distributed under the http://www.boost.org/LICENSE_1_0.txt
- * Modified work Copyright (c) 2020 Jan Procházka
+ * Modified work Copyright (c) 2020 Jan Procházka re-distributed under the MIT license (see LICENSE in the repository root)
  */
 
 #ifndef SERVER_ENDIAN_HPP_
