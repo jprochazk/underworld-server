@@ -1,13 +1,17 @@
-#ifndef SERVER_ENDIAN_HPP_
-#define SERVER_ENDIAN_HPP_
-
 /**
+ * 
  * This file defines:
  *  - Native byte order
- *  - Byte swap intrinsics
- *  - Endian reversal functions (with fallbacks in case of no intrinsics)
- *  - Network/Native order functions
+ *  - Byte swap intrinsics (with fallbacks)
+ *  - Endian conversion functions
+ *
+ * Much of this code is originally from Boost.Endian
+ * Original work Copyright (c) 2019 Peter Dimov distributed under the http://www.boost.org/LICENSE_1_0.txt
+ * Modified work Copyright (c) 2020 Jan Procházka
  */
+
+#ifndef SERVER_ENDIAN_HPP_
+#define SERVER_ENDIAN_HPP_
 
 #define LITTLE_ENDIAN_ORDER 0
 #define BIG_ENDIAN_ORDER 1
@@ -226,6 +230,9 @@ inline void reverse_inplace(T (&x)[N]) noexcept
     }
 }
 
+
+// This is dead code, but it may be useful in the future.
+/* 
 template<class T>
 inline void
 network_order(T& x) noexcept
@@ -285,7 +292,7 @@ native_order_range(T* data, std::size_t size) noexcept
     for (std::size_t i = 0; i < size; ++i) {
         native_order(data[i]);
     }
-}
+} */
 
 } // namespace endian
 
