@@ -3,7 +3,6 @@
 
 #include "boost/pfr/precise/core.hpp"
 #include "net/endian.hpp"
-//#include <boost/preprocessor.hpp>
 #include "boost/pfr.hpp"
 #include "util/log.hpp"
 #include <cstddef>
@@ -138,91 +137,6 @@ private:
     std::vector<uint8_t> buffer_;
 };
 
-/* template<typename T>
-struct is_deserializable : std::conditional<std::is_fundamental_v<T>, std::true_type, std::false_type>
-{};
-
-template<typename T>
-bool
-Deserialize(uint8_t* data, size_t size, T& out)
-{
-    static_assert(is_deserializable<T>::value, "Type is not deserializable");
-    if (size < sizeof(T))
-        return false;
-    Packet packet{ std::vector<uint8_t>{ data, data + size } };
-    packet >> out;
-    return true;
-}
-
-template<typename T>
-struct is_serializable : std::conditional<std::is_fundamental_v<T>, std::true_type, std::false_type>
-{};
-
-template<typename T>
-void
-Serialize(Packet& packet, const T& data)
-{
-    static_assert(is_serializable<T>::value, "Type is not serializable");
-    packet << data;
-} */
-
 } // namespace net
-
-/* #define SERVER_NET_PACKET_REVERSE(...) BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_REVERSE(BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)))
-#define SERVER_NET_PACKET_MAP(macro, data, ...)                                                                        \
-    BOOST_PP_SEQ_FOR_EACH(macro, data, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
-
-#define SERVER_NET_PACKET_DESERIALIZE_ONE(r, data, elem) >> data.elem
-#define DERIVE_DESERIALIZE(type, ...)                                                                                  \
-    namespace net {                                                                                                    \
-    template<>                                                                                                         \
-    struct is_deserializable<type> : std::true_type                                                                    \
-    {};                                                                                                                \
-    template<>                                                                                                         \
-    Packet&                                                                                                            \
-    operator>>(Packet& packet, type& data)                                                                             \
-    {                                                                                                                  \
-        return packet SERVER_NET_PACKET_MAP(                                                                           \
-          SERVER_NET_PACKET_DESERIALIZE_ONE, data, SERVER_NET_PACKET_REVERSE(__VA_ARGS__));                            \
-    }                                                                                                                  \
-    }
-#define DERIVE_DESERIALIZE_EMPTY(type)                                                                                 \
-    namespace net {                                                                                                    \
-    template<>                                                                                                         \
-    struct is_deserializable<type> : std::true_type                                                                    \
-    {};                                                                                                                \
-    template<>                                                                                                         \
-    Packet&                                                                                                            \
-    operator>>(Packet& packet, type&)                                                                                  \
-    {                                                                                                                  \
-        return packet;                                                                                                 \
-    }                                                                                                                  \
-    }
-
-#define SERVER_NET_PACKET_SERIALIZE_ONE(r, data, elem) << data.elem
-#define DERIVE_SERIALIZE(type, ...)                                                                                    \
-    namespace net {                                                                                                    \
-    template<>                                                                                                         \
-    struct is_serializable<type> : std::true_type                                                                      \
-    {};                                                                                                                \
-    template<>                                                                                                         \
-    Packet&                                                                                                            \
-    operator<<(Packet& packet, const type& data)                                                                       \
-    {                                                                                                                  \
-        return packet SERVER_NET_PACKET_MAP(SERVER_NET_PACKET_SERIALIZE_ONE, data, __VA_ARGS__);                       \
-    }                                                                                                                  \
-    }
-#define DERIVE_SERIALIZE_EMPTY(type)                                                                                   \
-    namespace net {                                                                                                    \
-    template<>                                                                                                         \
-    struct is_serializable<type> : std::true_type                                                                      \
-    {};                                                                                                                \
-    template<>                                                                                                         \
-    Packet&                                                                                                            \
-    operator<<(Packet& packet, const type&)                                                                            \
-    {                                                                                                                  \
-        return packet;                                                                                                 \
-    }                                                                                                                  \
-    } */
 
 #endif // SERVER_NET_PACKET_HPP_
