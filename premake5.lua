@@ -218,7 +218,7 @@ function Binary()
         symbols "On"
     else
         defines { "NDEBUG" }
-        optimize "On"
+        optimize "Speed"
     end
 end
 
@@ -255,7 +255,7 @@ function Tests()
         symbols "On"
     else
         defines { "NDEBUG" }
-        optimize "On"
+        optimize "Speed"
     end
 end
 

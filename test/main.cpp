@@ -1,7 +1,6 @@
 
 #include <gtest/gtest.h>
 
-//#include "endian_test.h"
 #include "packet_test.h"
 
 int

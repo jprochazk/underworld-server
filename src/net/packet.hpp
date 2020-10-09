@@ -31,22 +31,22 @@ public:
       , buffer_{ data, data + size }
     {}
 
-    // Overload for deserializing fundamental types (int, float, etc) 
+    // Allows for deserializing fundamental types (int, float, etc) 
     // or POD types (standard layout and trivially constructible, such as C-structs)
     template<typename T>
-    friend Packet&
-    operator>>(Packet& packet, T& data)
+    Packet&
+    read(T& data)
     {
         static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
 
         if constexpr (std::is_fundamental_v<T>) {
             // if we're deserializing a fundamental type
             // copy the data from the internal buffer
-            std::memcpy(&data, packet.buffer_.data() + packet.cursor_, sizeof(T));
+            std::memcpy(&data, buffer_.data() + cursor_, sizeof(T));
             // reverse its endianness if on a little-endian platform
             endian::reverse_inplace(data);
             // move the cursor forward
-            packet.cursor_ += sizeof(T);
+            cursor_ += sizeof(T);
         } else if constexpr (std::is_pod_v<T>) {
             // if we're deserializing a POD type
             // iterate over each field in the POD - this can be a tuple, a plain array, or a struct
@@ -54,48 +54,50 @@ public:
             boost::pfr::for_each_field(data, [&](auto& value) {
                 // TODO: de-duplicate this code
                 // doing the same as above, with sizeof(value) instead of sizeof(T)
-                std::memcpy(&value, packet.buffer_.data() + packet.cursor_, sizeof(value));
+                std::memcpy(&value, buffer_.data() + cursor_, sizeof(value));
                 endian::reverse_inplace(value);
-                packet.cursor_ += sizeof(value);
+                cursor_ += sizeof(value);
             });
         }
 
-        return packet;
+        return *this;
     }
 
+    // Allows for serializing fundamental types (int, float, etc) 
+    // or POD types (standard layout and trivially constructible, such as C-structs)
     template<typename T>
-    friend Packet&
-    operator<<(Packet& packet, const T& data)
+    Packet&
+    write(const T& data)
     {
         static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
 
         // If we don't have enough space, allocate more
-        if (packet.buffer_.size() - packet.cursor_ < sizeof(T)) {
-            packet.buffer_.resize(packet.cursor_ + sizeof(T));
+        if (buffer_.size() - cursor_ < sizeof(T)) {
+            buffer_.resize(cursor_ + sizeof(T));
         }
 
         if constexpr (std::is_fundamental_v<T>) {
             // If we're serializing a fundamental type
             // copy the value into the internal buffer
-            std::memcpy(packet.buffer_.data() + packet.cursor_, &data, sizeof(T));
+            std::memcpy(buffer_.data() + cursor_, &data, sizeof(T));
             // convert the endianness of what we just copied into the buffer
             // here we're aliasing the buffer data pointer
-            endian::reverse_inplace(*(reinterpret_cast<T*>(packet.buffer_.data() + packet.cursor_)));
+            endian::reverse_inplace(*(reinterpret_cast<T*>(buffer_.data() + cursor_)));
             // move the cursor forward
-            packet.cursor_ += sizeof(T);
+            cursor_ += sizeof(T);
         } else if constexpr (std::is_pod_v<T>) {
             boost::pfr::for_each_field(data, [&](const auto& value) {
                 // TODO: de-duplicate this code
                 // doing the same thing as above, just with sizeof(value) instead of sizeof(T)
-                std::memcpy(packet.buffer_.data() + packet.cursor_, &value, sizeof(value));
+                std::memcpy(buffer_.data() + cursor_, &value, sizeof(value));
                 endian::reverse_inplace(
                   *(reinterpret_cast<std::remove_const_t<std::remove_reference_t<decltype(value)>>*>(
-                    packet.buffer_.data() + packet.cursor_)));
-                packet.cursor_ += sizeof(value);
+                    buffer_.data() + cursor_)));
+                cursor_ += sizeof(value);
             });
         }
 
-        return packet;
+        return *this;
     }
 
     // Returns the internal cursor position
