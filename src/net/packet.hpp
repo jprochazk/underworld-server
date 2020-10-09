@@ -5,6 +5,7 @@
 #include "net/endian.hpp"
 #include "boost/pfr.hpp"
 #include "util/log.hpp"
+#include "util/assert.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -33,10 +34,14 @@ public:
 
     // Allows for deserializing fundamental types (int, float, etc) 
     // or POD types (standard layout and trivially constructible, such as C-structs)
+    //
+    // @throws when out of bounds
     template<typename T>
     Packet&
     read(T& data)
     {
+        // assert that we have enough data
+        ASSERT(size() >= cursor_ + sizeof(T));
         static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
 
         if constexpr (std::is_fundamental_v<T>) {
@@ -58,6 +63,23 @@ public:
                 endian::reverse_inplace(value);
                 cursor_ += sizeof(value);
             });
+        }
+
+        return *this;
+    }
+
+    // Allows for serializing vectors of fundamental or POD types
+    //
+    // @throws when out of bounds
+    template<typename T>
+    Packet&
+    read(std::vector<T>& data, std::size_t count) {
+        // assert that we have enough data
+        ASSERT(size() >= cursor_ + (count * sizeof(T)));
+        // then resize and read
+        data.resize(count);
+        for (size_t i = 0; i < count; ++i) {
+            read(data[i]);
         }
 
         return *this;
@@ -97,6 +119,17 @@ public:
             });
         }
 
+        return *this;
+    }
+
+    // Allows for serializing vectors of fundamental or POD types
+    template<typename T>
+    Packet&
+    write(const std::vector<T>& data)
+    {
+        for (const auto& el : data) {
+            write(el);
+        }
         return *this;
     }
 
@@ -161,6 +194,10 @@ public:
     end()
     {
         return buffer_.end();
+    }
+
+    bool operator==(const Packet& other) {
+        return buffer_ == other.buffer_;
     }
 
 private:
