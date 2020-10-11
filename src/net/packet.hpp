@@ -1,11 +1,11 @@
 #ifndef SERVER_NET_PACKET_HPP_
 #define SERVER_NET_PACKET_HPP_
 
+#include "boost/pfr.hpp"
 #include "boost/pfr/precise/core.hpp"
 #include "net/endian.hpp"
-#include "boost/pfr.hpp"
-#include "util/log.hpp"
 #include "util/assert.hpp"
+#include "util/log.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -32,7 +32,7 @@ public:
       , buffer_{ data, data + size }
     {}
 
-    // Allows for deserializing fundamental types (int, float, etc) 
+    // Allows for deserializing fundamental types (int, float, etc)
     // or POD types (standard layout and trivially constructible, such as C-structs)
     //
     // @throws when out of bounds
@@ -73,7 +73,8 @@ public:
     // @throws when out of bounds
     template<typename T>
     Packet&
-    read(std::vector<T>& data, std::size_t count) {
+    read(std::vector<T>& data, std::size_t count)
+    {
         // assert that we have enough data
         ASSERT(size() >= cursor_ + (count * sizeof(T)));
         // then resize and read
@@ -85,7 +86,7 @@ public:
         return *this;
     }
 
-    // Allows for serializing fundamental types (int, float, etc) 
+    // Allows for serializing fundamental types (int, float, etc)
     // or POD types (standard layout and trivially constructible, such as C-structs)
     template<typename T>
     Packet&
@@ -113,8 +114,8 @@ public:
                 // doing the same thing as above, just with sizeof(value) instead of sizeof(T)
                 std::memcpy(buffer_.data() + cursor_, &value, sizeof(value));
                 endian::reverse_inplace(
-                  *(reinterpret_cast<std::remove_const_t<std::remove_reference_t<decltype(value)>>*>(
-                    buffer_.data() + cursor_)));
+                  *(reinterpret_cast<std::remove_const_t<std::remove_reference_t<decltype(value)>>*>(buffer_.data() +
+                                                                                                     cursor_)));
                 cursor_ += sizeof(value);
             });
         }
@@ -196,7 +197,9 @@ public:
         return buffer_.end();
     }
 
-    bool operator==(const Packet& other) {
+    bool
+    operator==(const Packet& other)
+    {
         return buffer_ == other.buffer_;
     }
 

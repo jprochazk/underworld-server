@@ -19,7 +19,8 @@ public:
 
     ~ScopedThread() { join(); }
 
-    ScopedThread& operator=(ScopedThread&& other)
+    ScopedThread&
+    operator=(ScopedThread&& other)
     {
         thread_ = std::move(other.thread_);
         return *this;
@@ -30,9 +31,14 @@ public:
     std::thread* operator->() { return &thread_; }
     std::thread const* operator->() const { return &thread_; }
 
-    std::thread::id get_id() const { return thread_.get_id(); }
+    std::thread::id
+    get_id() const
+    {
+        return thread_.get_id();
+    }
 
-    void join()
+    void
+    join()
     {
         if (thread_.joinable())
             thread_.join();

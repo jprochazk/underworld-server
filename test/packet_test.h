@@ -26,19 +26,21 @@ TEST(Packet, Write_Simple)
 }
 
 TEST(Packet, Read_Struct)
-{   
+{
     struct Foo
     {
         uint32_t foo;
         uint32_t bar;
         float baz;
 
-        bool operator==(const Foo& other) {
+        bool
+        operator==(const Foo& other)
+        {
             return foo == other.foo && bar == other.bar && baz == other.baz;
         }
     };
 
-    Foo expected { 128592315u, 128592315u, 10.5f };
+    Foo expected{ 128592315u, 128592315u, 10.5f };
     net::Packet packet{ { 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00 } };
 
     Foo actual{};
@@ -55,7 +57,9 @@ TEST(Packet, Write_Struct)
         uint32_t bar;
         float baz;
 
-        bool operator==(const Foo& other) {
+        bool
+        operator==(const Foo& other)
+        {
             return foo == other.foo && bar == other.bar && baz == other.baz;
         }
     };
@@ -99,17 +103,19 @@ TEST(Packet, Read_Vector_Struct)
         uint32_t bar;
         float baz;
 
-        bool operator==(const Foo& other) {
+        bool
+        operator==(const Foo& other)
+        {
             return foo == other.foo && bar == other.bar && baz == other.baz;
         }
     };
 
-    std::vector<Foo> expected = {
-        Foo { 128592315u, 128592315u, 10.5f },
-        Foo { 128592315u, 128592315u, 10.5f },
-        Foo { 128592315u, 128592315u, 10.5f }
-    };
-    net::Packet packet{ { 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00, 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00, 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00 } };
+    std::vector<Foo> expected = { Foo{ 128592315u, 128592315u, 10.5f },
+                                  Foo{ 128592315u, 128592315u, 10.5f },
+                                  Foo{ 128592315u, 128592315u, 10.5f } };
+    net::Packet packet{ { 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00,
+                          0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00,
+                          0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00 } };
 
     std::vector<Foo> actual{};
     packet.read(actual, 3);
@@ -127,17 +133,19 @@ TEST(Packet, Write_Vector_Struct)
         uint32_t bar;
         float baz;
 
-        bool operator==(const Foo& other) {
+        bool
+        operator==(const Foo& other)
+        {
             return foo == other.foo && bar == other.bar && baz == other.baz;
         }
     };
 
-    net::Packet expected{ { 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00, 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00, 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00 } };
-    std::vector<Foo> value = {
-        Foo { 128592315u, 128592315u, 10.5f },
-        Foo { 128592315u, 128592315u, 10.5f },
-        Foo { 128592315u, 128592315u, 10.5f }
-    };
+    net::Packet expected{ { 0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00,
+                            0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00,
+                            0x07, 0xAA, 0x29, 0xBB, 0x07, 0xAA, 0x29, 0xBB, 0x41, 0x28, 0x00, 0x00 } };
+    std::vector<Foo> value = { Foo{ 128592315u, 128592315u, 10.5f },
+                               Foo{ 128592315u, 128592315u, 10.5f },
+                               Foo{ 128592315u, 128592315u, 10.5f } };
 
     net::Packet actual{};
     actual.write(value);

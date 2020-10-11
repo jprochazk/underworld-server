@@ -1,5 +1,5 @@
 /**
- * 
+ *
  * This file defines:
  *  - Native byte order
  *  - Byte swap intrinsics (with fallbacks)
@@ -7,7 +7,8 @@
  *
  * Much of this code is originally from Boost.Endian
  * Original work Copyright (c) 2019 Peter Dimov distributed under the http://www.boost.org/LICENSE_1_0.txt
- * Modified work Copyright (c) 2020 Jan Procházka re-distributed under the MIT license (see LICENSE in the repository root)
+ * Modified work Copyright (c) 2020 Jan Procházka re-distributed under the MIT license (see LICENSE in the repository
+ * root)
  */
 
 #ifndef SERVER_ENDIAN_HPP_
@@ -230,9 +231,8 @@ inline void reverse_inplace(T (&x)[N]) noexcept
     }
 }
 
-
 // This is dead code, but it may be useful in the future.
-/* 
+/*
 template<class T>
 inline void
 network_order(T& x) noexcept

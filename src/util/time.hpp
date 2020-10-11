@@ -28,7 +28,8 @@ using Instant = std::chrono::time_point<Clock, Duration>;
 
 struct Date : Instant
 {
-    std::string toString()
+    std::string
+    toString()
     {
         auto tm_snapshot = detail::localtime(Clock::to_time_t(std::chrono::time_point<Clock, Clock::duration>(
           std::chrono::duration_cast<Clock::duration>(time_since_epoch()))));

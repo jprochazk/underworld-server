@@ -16,8 +16,9 @@ public:
     virtual void open() = 0;
 }; // class Listener
 
-std::shared_ptr<Listener>
-CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Handler> handler);
+std::shared_ptr<Listener> CreateListener(asio::io_context& ioc,
+                                         tcp::endpoint endpoint,
+                                         std::shared_ptr<Handler> handler);
 
 } // namespace net
 
