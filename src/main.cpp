@@ -1,8 +1,8 @@
 
+#include "game/session.hpp"
 #include "net/listener.hpp"
 #include "net/net.hpp"
 #include "net/packet.hpp"
-#include "server/session.hpp"
 #include "util/json.hpp"
 #include "util/log.hpp"
 #include "util/thread.hpp"
@@ -117,7 +117,7 @@ main()
     asio::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(HandleSignal);
 
-    auto sessionMgr = server::CreateSessionManager();
+    auto sessionMgr = game::CreateSessionManager();
     net::Context context{ ioc, config.address, config.port, config.threads, sessionMgr };
 
     util::log::Info("main", "Server is ready, starting main loop...");
