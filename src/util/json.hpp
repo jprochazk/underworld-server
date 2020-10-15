@@ -145,7 +145,7 @@ namespace util {
 
 json inline LoadJson(const std::string& path)
 {
-    log::Trace("LoadJson", "Loading \"{}\"", path);
+    log::Debug("LoadJson", "Loading \"{}\"", path);
     return json::parse(std::ifstream(path), nullptr, false);
 }
 

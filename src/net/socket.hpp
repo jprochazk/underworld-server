@@ -16,6 +16,7 @@ public:
     virtual ~Socket() = default;
     virtual void open(http::request<http::string_body> req, std::string token) = 0;
     virtual void close() = 0;
+    // TODO: make an overload for sending shared_ptr<vector<uint8_t>> data
     virtual void send(std::vector<uint8_t> data) = 0;
 
     virtual uint32_t getId() = 0;

@@ -1,7 +1,9 @@
 
 #include "game/handler.hpp"
-#include "game/session.hpp"
+#include "game/player.hpp"
+#include "game/world.hpp"
 #include "net/packet.hpp"
+#include "net/socket.hpp"
 #include "util/log.hpp"
 
 template<typename T>
@@ -15,12 +17,16 @@ template<>
 void
 handle(game::Context& context, Test& packet)
 {
-    util::log::Info("Test", "[Session#{}] value: {}", context.session.getId(), packet.value);
-    if (context.session.send(std::vector<uint8_t>{ 0, 0, 0, 0 })) {
-        util::log::Info("Test", "[Session#{}] response success", context.session.getId());
-    } else {
-        util::log::Info("Test", "[Session#{}] response failure", context.session.getId());
-    }
+    if (!context.player.valid())
+        return;
+
+    auto socket = context.player.getSocket();
+    if (!socket)
+        return;
+
+    util::log::Debug("Test", "[Session#{}] value: {}", socket->getId(), packet.value);
+    socket->send(std::vector<uint8_t>{ 0, 0, 0, 0 });
+    util::log::Debug("Test", "[Session#{}] responsed with [0, 0, 0, 0]", socket->getId());
 }
 
 struct Jump
@@ -29,7 +35,13 @@ template<>
 void
 handle(game::Context& context, Jump&)
 {
-    util::log::Info("Jump", "[Session#{}]", context.session.getId());
+    if (!context.player.valid())
+        return;
+
+    auto socket = context.player.getSocket();
+    if (!socket)
+        return;
+    util::log::Debug("Jump", "Player {{ Session {{ id: {} }} }}", context.player.getSocket()->getId());
 }
 
 template<typename T>

@@ -70,7 +70,7 @@ public:
         if (isOpen())
             return;
 
-        util::log::Trace("SocketImpl::close", "Closing socket ID {}", id_);
+        util::log::Debug("SocketImpl::close", "Closing socket ID {}", id_);
         stream_.async_close(beast::websocket::close_code::normal,
                             beast::bind_front_handler(&SocketImpl::onClose, shared_from_this()));
     }
@@ -81,7 +81,7 @@ public:
         if (!isOpen())
             return;
 
-        util::log::Trace("SocketImpl::send", "Sending {} bytes to socket ID {}", data.size(), id_);
+        util::log::Debug("SocketImpl::send", "Sending {} bytes to socket ID {}", data.size(), id_);
         asio::post(stream_.get_executor(),
                    beast::bind_front_handler(&SocketImpl::onSend, shared_from_this(), std::move(data)));
     }
@@ -174,7 +174,7 @@ private:
 std::shared_ptr<Socket>
 CreateSocket(uint32_t id, tcp::socket&& socket, std::shared_ptr<Handler> handler)
 {
-    util::log::Trace("CreateListener", "New socket ID {}", id);
+    util::log::Debug("CreateListener", "New socket ID {}", id);
     return std::make_shared<SocketImpl>(id, std::move(socket), handler);
 }
 

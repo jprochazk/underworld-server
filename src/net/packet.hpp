@@ -4,13 +4,16 @@
 #include "boost/pfr.hpp"
 #include "boost/pfr/precise/core.hpp"
 #include "net/endian.hpp"
-#include "util/assert.hpp"
 #include "util/log.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
 #include <vector>
+
+#ifndef NDEBUG
+#    include <stdexcept>
+#endif
 
 namespace net {
 
@@ -41,7 +44,11 @@ public:
     read(T& data)
     {
         // assert that we have enough data
-        ASSERT(size() >= cursor_ + sizeof(T));
+#ifndef NDEBUG
+        if (!(size() >= cursor_ + sizeof(T))) {
+            throw std::runtime_error{ "Packet index out of bounds" };
+        }
+#endif
         static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
 
         if constexpr (std::is_fundamental_v<T>) {
@@ -76,7 +83,12 @@ public:
     read(std::vector<T>& data, std::size_t count)
     {
         // assert that we have enough data
-        ASSERT(size() >= cursor_ + (count * sizeof(T)));
+
+#ifndef NDEBUG
+        if (!(size() >= cursor_ + (count * sizeof(T)))) {
+            throw std::runtime_error{ "Packet index out of bounds" };
+        }
+#endif
         // then resize and read
         data.resize(count);
         for (size_t i = 0; i < count; ++i) {

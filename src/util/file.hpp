@@ -11,7 +11,7 @@ namespace util {
 inline void
 LoadFile(const std::string& path, std::string& out)
 {
-    log::Trace("LoadFile", "Loading \"{}\"", path);
+    log::Debug("LoadFile", "Loading \"{}\"", path);
     beast::file file;
     beast::error_code ec;
     file.open(path.c_str(), beast::file_mode::read, ec);

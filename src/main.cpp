@@ -1,5 +1,5 @@
 
-#include "game/session.hpp"
+#include "game/world.hpp"
 #include "net/listener.hpp"
 #include "net/net.hpp"
 #include "net/packet.hpp"
@@ -20,29 +20,45 @@ struct Config
     std::string address;
     uint16_t port;
     uint8_t threads;
+    uint32_t updateRate;
+    util::log::Level logLevel;
 };
+std::ostream&
+operator<<(std::ostream& out, const Config& cfg)
+{
+    return out << "address: " << cfg.address << ", "
+               << "port: " << cfg.port << ", "
+               << "threads: " << cfg.threads << ", "
+               << "updateRate: " << cfg.updateRate << ", "
+               << "logLevel: " << util::log::ToString(cfg.logLevel) << std::endl;
+}
 
 namespace util {
 
 Config
 LoadConfig(const std::string& path = "config.json")
 {
-    log::Trace("LoadConfig", "Loading \"{}\"", path);
+    log::Debug("LoadConfig", "Loading \"{}\"", path);
     auto cfgFile = LoadJson(path);
 
-    auto address = try_get_default<std::string>(cfgFile, "address", std::string{ "127.0.0.1" });
-    auto port = try_get_default<uint16_t>(cfgFile, "port", static_cast<uint16_t>(8080));
-    auto threads = try_get_default<uint8_t>(cfgFile, "threads", static_cast<uint8_t>(1));
+    Config cfg{};
 
-    return Config{ address, port, threads };
+    cfg.address = try_get_default<std::string>(cfgFile, "address", "127.0.0.1");
+    cfg.port = try_get_default<uint16_t>(cfgFile, "port", static_cast<uint16_t>(8080));
+    cfg.threads = try_get_default<uint8_t>(cfgFile, "threads", static_cast<uint8_t>(1));
+    cfg.updateRate = try_get_default<uint32_t>(cfgFile, "updateRate", static_cast<uint32_t>(60));
+    auto logLevelStr = try_get_default<std::string>(cfgFile, "logLevel", "info");
+    const std::unordered_map<std::string, util::log::Level> logLevels = {
+        { "trace", util::log::Level::Trace }, { "debug", util::log::Level::Debug },
+        { "info", util::log::Level::Info },   { "warn", util::log::Level::Warn },
+        { "error", util::log::Level::Error }, { "fatal", util::log::Level::Critical }
+    };
+    cfg.logLevel = logLevels.at(logLevelStr);
+
+    return cfg;
 }
 
 }
-
-// TODO: investigate port failing to bind
-// probably need to implement signal handlers
-// and come up with a proper way to
-// start and stop network threads
 
 std::map<size_t, std::string> signals = {
     { 1, "SIGHUP" },     { 2, "SIGINT" },   { 3, "SIGQUIT" },   { 4, "SIGILL" },   { 5, "SIGTRAP" },
@@ -110,30 +126,31 @@ public:
 int
 main()
 {
-    util::log::SetLevel(util::log::Level::Trace);
+    util::log::SetLevel(util::log::Level::Info);
     const auto config = util::LoadConfig();
 
     asio::io_context ioc;
     asio::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(HandleSignal);
 
-    auto sessionMgr = game::CreateSessionManager();
-    net::Context context{ ioc, config.address, config.port, config.threads, sessionMgr };
+    auto world = game::CreateWorld();
+    net::Context context{ ioc, config.address, config.port, config.threads, world->getHandler() };
 
     util::log::Info("main", "Server is ready, starting main loop...");
 
     // Server will live for 30 seconds and then shutdown
     // During this time, sockets may connect and send messages.
+    const auto updateInterval = 1000. / static_cast<double>(config.updateRate);
     auto last = util::time::Now();
     while (!ShouldExit) {
         // 1 tick = 1000 ms
         auto now = util::time::Now();
         auto diff = (now - last).count();
-        if (diff < 1000)
+        if (diff < updateInterval)
             continue;
 
         last = now;
 
-        sessionMgr->update();
+        world->update();
     }
 }

@@ -127,13 +127,13 @@ public:
             return;
         }
 
-        util::log::Trace("ListenerImpl", "Listener is initialized");
+        util::log::Debug("ListenerImpl", "Listener is initialized");
     }
 
     virtual void
     open() override
     {
-        util::log::Trace("ListenerImpl", "Opening listener port");
+        util::log::Debug("ListenerImpl", "Opening listener port");
         // start the accept loop
         acceptor_.async_accept(asio::make_strand(ioc_),
                                beast::bind_front_handler(&ListenerImpl::onAccept, shared_from_this()));
@@ -153,7 +153,7 @@ private:
     void
     onAccept(beast::error_code ec, tcp::socket socket)
     {
-        util::log::Trace("ListenerImpl::onAccept", "Got socket");
+        util::log::Debug("ListenerImpl::onAccept", "Got socket");
 
         if (ec) {
             return fail("onAccept", ec);

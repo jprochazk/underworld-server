@@ -1,7 +1,8 @@
 
 #include <gtest/gtest.h>
 
-#include "packet_test.h"
+#include "test_packet.h"
+#include "test_world.h"
 
 int
 main(int argc, char** argv)
