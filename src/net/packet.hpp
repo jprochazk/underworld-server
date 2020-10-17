@@ -218,7 +218,7 @@ public:
 private:
     size_t cursor_;
     std::vector<uint8_t> buffer_;
-};
+}; // class Packet
 
 } // namespace net
 

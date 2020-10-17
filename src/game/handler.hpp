@@ -46,6 +46,9 @@ enum Opcode : uint16_t
 };
 
 // TODO: change this to be something more easily testable
+// currently, for testing purposes, there is a literal "test" packet, which does nothing other than
+// give us the ability to verify that this was called
+// similar to net::Handler?
 void Handle(game::Context& context, game::Opcode opcode, net::Packet& packet);
 
 } // namespace game

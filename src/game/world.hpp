@@ -3,6 +3,8 @@
 
 #include "net/handler.hpp"
 
+// TODO: implement WorldManager
+
 namespace game {
 
 class World
@@ -12,7 +14,7 @@ public:
     virtual void update() = 0;
     virtual std::shared_ptr<net::Handler> getHandler() = 0;
     virtual size_t size() const = 0;
-};
+}; // class World
 
 std::shared_ptr<World> CreateWorld();
 

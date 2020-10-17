@@ -43,7 +43,8 @@ public:
         if (thread_.joinable())
             thread_.join();
     }
-};
-}
+}; // class ScopedThread
+
+} // namespace util
 
 #endif // SERVER_UTIL_THREAD_HPP_

@@ -145,7 +145,7 @@ private:
     std::shared_ptr<SocketEventHandler> msgHandler_;
     entt::registry registry_;
     std::unordered_map<uint32_t, Player> players_;
-};
+}; // class WorldImpl
 
 std::shared_ptr<World>
 CreateWorld()

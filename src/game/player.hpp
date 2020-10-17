@@ -36,7 +36,7 @@ struct Player
     // Analogous to checking if the entity has all components which make up a Player
     bool valid();
 
-    // NOTE: Does not check if Player is valid!
+    // Does not check if Player is valid!
     std::shared_ptr<net::Socket> getSocket();
 };
 
