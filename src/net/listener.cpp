@@ -87,14 +87,14 @@ class ListenerImpl final
 {
     asio::io_context& ioc_;
     tcp::acceptor acceptor_;
-    std::shared_ptr<Handler> handler_;
+    std::shared_ptr<Router> router_;
     uint32_t idseq_;
 
 public:
-    ListenerImpl(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Handler> handler)
+    ListenerImpl(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Router> router)
       : ioc_{ ioc }
       , acceptor_{ ioc }
-      , handler_{ handler }
+      , router_{ router }
       , idseq_{ 0 }
     {
 
@@ -159,50 +159,17 @@ private:
             return fail("onAccept", ec);
         }
 
-        std::make_shared<Authenticator>(idseq_++, std::move(socket), handler_)->run();
+        std::make_shared<Authenticator>(idseq_++, std::move(socket), router_->select())->run();
 
         acceptor_.async_accept(asio::make_strand(ioc_),
                                beast::bind_front_handler(&ListenerImpl::onAccept, shared_from_this()));
     }
 }; // class ListenerImpl
 
-class DefaultHandlerImpl final : public Handler
-{
-public:
-    void
-    onOpen(uint32_t id, std::weak_ptr<net::Socket> /* socket */) override
-    {
-        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> open", id);
-    }
-
-    void
-    onClose(uint32_t id) override
-    {
-        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> close", id);
-    }
-
-    void
-    onMessage(uint32_t id, uint8_t* /* data */, size_t size) override
-    {
-        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> message size {}", id, size);
-    }
-
-    // Sockets that encounter an error aren't closed.
-    void
-    onError(uint32_t id, std::string_view what, beast::error_code error) override
-    {
-        if (error == asio::error::operation_aborted || error == asio::error::connection_aborted ||
-            error == beast::websocket::error::closed)
-            return;
-        util::log::Info("DefaultHandlerImpl", "Socket {{ ID = {} }} -> error: {}, {}", id, what, error.message());
-    }
-}; // class DefaultHandlerImpl
-
 std::shared_ptr<Listener>
-CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Handler> handler)
+CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Router> router)
 {
-    return std::make_shared<ListenerImpl>(
-      ioc, endpoint, static_cast<bool>(handler) ? handler : std::make_shared<DefaultHandlerImpl>());
+    return std::make_shared<ListenerImpl>(ioc, endpoint, router);
 }
 
 } // namespace net

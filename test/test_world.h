@@ -21,6 +21,7 @@ struct TestSocket final : public net::Socket
     void
     close() override
     {}
+    void setHandler(std::shared_ptr<net::Handler>) override {}
     void
     send(std::vector<uint8_t> data) override
     {
@@ -43,53 +44,72 @@ struct TestSocket final : public net::Socket
 TEST(World, Connect)
 {
     util::log::SetLevel(util::log::Level::Error);
-    auto world = game::CreateWorld();
+    auto world = game::CreateWorld(0u);
     auto handler = world->getHandler();
 
     auto socket = std::make_shared<TestSocket>();
-    handler->onOpen(0, socket);
+    handler->onOpen(0u, socket);
     world->update();
     EXPECT_EQ(world->size(), 1u);
 }
 TEST(World, Message)
 {
     util::log::SetLevel(util::log::Level::Error);
-    auto world = game::CreateWorld();
+    auto world = game::CreateWorld(0u);
     auto handler = world->getHandler();
 
     auto socket = std::make_shared<TestSocket>();
-    handler->onOpen(0, socket);
+    handler->onOpen(0u, socket);
     world->update();
     EXPECT_EQ(world->size(), 1u);
 
     net::Packet pkt;
     pkt.write(game::Opcode::Test);
-    pkt.write(static_cast<uint16_t>(1));
+    pkt.write(static_cast<uint16_t>(1u));
 
-    handler->onMessage(0, pkt.data(), pkt.size());
+    handler->onMessage(0u, pkt.data(), pkt.size());
     world->update();
 
     EXPECT_EQ(socket->messages.size(), 1u);
     EXPECT_EQ(socket->messages.front().size(), 4u);
-    auto expected_response_data = std::vector<uint8_t>{ 0, 0, 0, 0 };
+    auto expected_response_data = std::vector<uint8_t>{ 0u, 0u, 0u, 0u };
     EXPECT_EQ(socket->messages.front(), expected_response_data);
 
-    handler->onClose(0);
+    handler->onClose(0u);
     world->update();
     EXPECT_EQ(world->size(), 0u);
 }
 TEST(World, Close)
 {
     util::log::SetLevel(util::log::Level::Error);
-    auto world = game::CreateWorld();
+    auto world = game::CreateWorld(0u);
     auto handler = world->getHandler();
 
     auto socket = std::make_shared<TestSocket>();
-    handler->onOpen(0, socket);
+    handler->onOpen(0u, socket);
     world->update();
     EXPECT_EQ(world->size(), 1u);
 
-    handler->onClose(0);
+    handler->onClose(0u);
     world->update();
     EXPECT_EQ(world->size(), 0u);
+}
+
+TEST(WorldManager, Select)
+{
+    size_t numWorlds = 2u;
+    auto wmgr = game::CreateWorldManager(numWorlds);
+
+    // opening N connections
+    for (size_t i = 0; i < numWorlds; ++i) {
+        auto socket = std::make_shared<TestSocket>();
+        auto handler = wmgr->select();
+        handler->onOpen(0u, socket);
+        wmgr->get(handler->id())->update();
+    }
+
+    // each world should have 1 player
+    for (size_t i = 0; i < numWorlds; ++i) {
+        EXPECT_EQ(wmgr->get(i)->size(), 1u);
+    }
 }

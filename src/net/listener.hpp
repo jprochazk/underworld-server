@@ -6,7 +6,7 @@
 
 namespace net {
 
-class Handler;
+class Router;
 
 class Listener
 {
@@ -18,9 +18,7 @@ public:
 
 // TODO: change Listener to take Ref<WorldManager>
 // TODO: grab a Ref<World> from WorldManager, which is passed into authenticator and socket normally
-std::shared_ptr<Listener> CreateListener(asio::io_context& ioc,
-                                         tcp::endpoint endpoint,
-                                         std::shared_ptr<Handler> handler);
+std::shared_ptr<Listener> CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Router> router);
 
 } // namespace net
 

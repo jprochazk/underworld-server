@@ -12,8 +12,8 @@ public:
     Server()
       : ioc{ util::Config::get().threads }
       , signals{ ioc, SIGINT, SIGTERM }
-      , world{ game::CreateWorld() }
-      , context{ ioc, world->getHandler() }
+      , worldManager{ game::CreateWorldManager(util::Config::get().threads) }
+      , context{ ioc, worldManager }
       , updateInterval{ 1000. / static_cast<double>(util::Config::get().updateRate) }
     {
         util::log::Info("Server", "Initialized");
@@ -24,30 +24,18 @@ public:
     run()
     {
         util::log::Info("Server", "Running");
-        auto last = util::time::Now();
+        worldManager->start();
+        // infinite loop that simply does nothing other than wait for the signal handler to be called
+        // TODO: provide another way to terminate the server
         while (!SignalHandler::exit) {
-            // 1 tick = 1000 ms
-            auto now = util::time::Now();
-            auto diff = (now - last).count();
-            if (diff < updateInterval)
-                continue;
-
-            last = now;
-
-            update();
         }
+        worldManager->stop();
     }
 
 private:
-    void
-    update()
-    {
-        world->update();
-    }
-
     asio::io_context ioc;
     asio::signal_set signals;
-    std::shared_ptr<game::World> world;
+    std::shared_ptr<game::WorldManager> worldManager;
     net::Context context;
     double updateInterval;
 }; // class Server

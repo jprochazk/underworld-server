@@ -3,16 +3,16 @@
 
 namespace net {
 
-Context::Context(asio::io_context& ioc, std::shared_ptr<Handler> handler)
+Context::Context(asio::io_context& ioc, std::shared_ptr<Router> router)
   : ioc_{ ioc }
   , threads_{ util::Config::get().threads }
   , listener_{ nullptr }
-  , handler_{ handler }
+  , router_{ router }
   , address_{ util::Config::get().address }
   , port_{ util::Config::get().port }
   , numThreads_{ util::Config::get().threads }
 {
-    listener_ = CreateListener(ioc_, tcp::endpoint{ asio::ip::make_address(address_), port_ }, handler_);
+    listener_ = CreateListener(ioc_, tcp::endpoint{ asio::ip::make_address(address_), port_ }, router_);
     listener_->open();
 
     threads_.clear();

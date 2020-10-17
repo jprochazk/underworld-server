@@ -1,10 +1,8 @@
 #include "game/world.hpp"
-#include "entt/entity/fwd.hpp"
 #include "game/handler.hpp"
 #include "game/player.hpp"
-#include "net/packet.hpp"
-#include "net/socket.hpp"
-#include "util/log.hpp"
+#include "net/net.hpp"
+#include "util/util.hpp"
 #include <atomic>
 #include <entt/entt.hpp>
 #include <moodycamel/concurrentqueue.h>
@@ -32,6 +30,8 @@ public:
     {
         friend class WorldImpl;
 
+        uint16_t id_;
+
         struct
         {
             std::atomic_size_t copen;
@@ -41,6 +41,17 @@ public:
             std::atomic_size_t cmessage;
             moodycamel::ConcurrentQueue<std::pair<uint32_t, net::Packet>> message;
         } queues;
+
+        SocketEventHandler(uint16_t id)
+          : id_{ id }
+          , queues()
+        {}
+
+        uint16_t
+        id() const override
+        {
+            return id_;
+        }
 
         void
         onOpen(uint32_t /* id */, std::weak_ptr<net::Socket> socket) override
@@ -88,11 +99,43 @@ public:
         }
     };
 
-    WorldImpl()
-      : msgHandler_{ std::make_shared<SocketEventHandler>() }
+    WorldImpl(uint16_t id)
+      : id_{ id }
+      , msgHandler_{ std::make_shared<SocketEventHandler>(id) }
       , registry_{}
       , players_{}
+      , updateInterval_{ 1000. / static_cast<double>(util::Config::get().updateRate) }
+      , stop_{ false }
     {}
+
+    uint16_t
+    id() const override
+    {
+        return id_;
+    }
+
+    void
+    run() override
+    {
+        auto last = util::time::Now();
+        while (!stop_) {
+            // 1 tick = 1000 ms
+            auto now = util::time::Now();
+            auto diff = (now - last).count();
+            if (diff < updateInterval_)
+                continue;
+
+            last = now;
+
+            update();
+        }
+    }
+
+    void
+    stop() override
+    {
+        stop_ = true;
+    }
 
     void
     update() override
@@ -142,15 +185,102 @@ public:
     }
 
 private:
+    uint16_t id_;
     std::shared_ptr<SocketEventHandler> msgHandler_;
     entt::registry registry_;
     std::unordered_map<uint32_t, Player> players_;
+    double updateInterval_;
+    std::atomic_bool stop_;
 }; // class WorldImpl
 
 std::shared_ptr<World>
-CreateWorld()
+CreateWorld(uint16_t id)
 {
-    return std::make_shared<WorldImpl>();
+    return std::make_shared<WorldImpl>(id);
+}
+
+class WorldManagerImpl : public WorldManager
+{
+public:
+    WorldManagerImpl(size_t size)
+      : worlds_{}
+      , threads_{}
+    {
+        worlds_.reserve(size);
+        for (size_t i = 0; i < size; ++i) {
+            worlds_.emplace(i, std::static_pointer_cast<WorldImpl>(CreateWorld(i)));
+        }
+    }
+
+    void
+    start() override
+    {
+        // TODO: start/stop worlds based on some load-balancing algorithm
+        // allocate only one for now
+
+        // and start it on a separate thread
+        for (auto& [id, world] : worlds_) {
+            threads_.emplace(id, [this, id = id] { worlds_[id]->run(); });
+        }
+        // for (size_t i = util::Config::get().threads; i > 0; --i) {
+        //    threads_.emplace(i, [&] { worlds_[i]->run(); });
+        //}
+    }
+
+    void
+    stop() override
+    {
+        for (auto& [id, world] : worlds_) {
+            world->stop();
+        }
+    }
+
+    std::shared_ptr<World>
+    get(uint16_t id) override
+    {
+        if (auto it = worlds_.find(id); it != worlds_.end()) {
+            return it->second;
+        } else {
+            return {};
+        }
+    }
+
+    std::shared_ptr<net::Handler>
+    select() override
+    {
+        size_t lowest_population = static_cast<size_t>(-1);
+        uint16_t lowest_population_id = static_cast<uint16_t>(-1);
+        for (auto& [id, world] : worlds_) {
+            auto population = world->size();
+            if (population < lowest_population) {
+                lowest_population = population;
+                lowest_population_id = id;
+            }
+        }
+        return select(lowest_population_id);
+    }
+
+    std::shared_ptr<net::Handler>
+    select(uint16_t id) override
+    {
+        if (auto it = worlds_.find(id); it != worlds_.end()) {
+            return it->second->getHandler();
+        } else {
+            return {};
+        }
+    }
+
+private:
+    // map (world id => world)
+    std::unordered_map<uint16_t, std::shared_ptr<WorldImpl>> worlds_;
+    // map (world id => thread)
+    std::unordered_map<uint16_t, util::ScopedThread> threads_;
+}; // class WorldManager
+
+std::shared_ptr<WorldManager>
+CreateWorldManager(size_t size)
+{
+    return std::make_shared<WorldManagerImpl>(size);
 }
 
 } // namespace game

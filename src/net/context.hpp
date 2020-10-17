@@ -14,14 +14,14 @@ namespace net {
 class Context
 {
 public:
-    Context(asio::io_context& ioc, std::shared_ptr<Handler> handler);
+    Context(asio::io_context& ioc, std::shared_ptr<Router> router);
     ~Context();
 
 private:
     asio::io_context& ioc_;
     std::vector<util::ScopedThread> threads_;
     std::shared_ptr<Listener> listener_;
-    std::shared_ptr<Handler> handler_;
+    std::shared_ptr<Router> router_;
 
     std::string address_;
     uint16_t port_;

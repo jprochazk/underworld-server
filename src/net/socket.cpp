@@ -86,6 +86,13 @@ public:
                    beast::bind_front_handler(&SocketImpl::onSend, shared_from_this(), std::move(data)));
     }
 
+    virtual void
+    setHandler(std::shared_ptr<Handler> handler) override
+    {
+        asio::post(stream_.get_executor(),
+                   beast::bind_front_handler([self = shared_from_this(), handler] { self->handler_ = handler; }));
+    }
+
     virtual uint32_t
     getId() override
     {
