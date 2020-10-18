@@ -10,8 +10,6 @@
 int
 main()
 {
-    util::log::SetLevel(static_cast<util::log::Level>(util::Config::get().logLevel));
-
     try {
         Server server;
         server.run();

@@ -16,6 +16,8 @@ public:
       , context{ ioc, worldManager }
       , updateInterval{ 1000. / static_cast<double>(util::Config::get().updateRate) }
     {
+        util::log::SetLevel(static_cast<util::log::Level>(util::Config::get().logLevel));
+
         util::log::Info("Server", "Initialized");
         signals.async_wait(SignalHandler{});
     }

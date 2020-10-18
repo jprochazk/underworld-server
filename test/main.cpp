@@ -1,7 +1,8 @@
-
+#define GAME_TEST_ENVIRONMENT
 #include <gtest/gtest.h>
 
 #include "test_packet.h"
+#include "test_script.h"
 #include "test_world.h"
 
 int
