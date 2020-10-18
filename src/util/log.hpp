@@ -76,23 +76,9 @@ Info(const std::string& origin, const std::string& format, Args&&... args)
 
 template<typename... Args>
 inline void
-Info(const std::string& format, Args&&... args)
-{
-    return spdlog::info(format, std::forward<Args>(args)...);
-}
-
-template<typename... Args>
-inline void
 Error(const std::string& origin, const std::string& format, Args&&... args)
 {
     return spdlog::error("[{}] {}", origin, fmt::format(format, std::forward<Args>(args)...));
-}
-
-template<typename... Args>
-inline void
-Error(const std::string& format, Args&&... args)
-{
-    return spdlog::error(format, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
@@ -104,23 +90,9 @@ Critical(const std::string& origin, const std::string& format, Args&&... args)
 
 template<typename... Args>
 inline void
-Critical(const std::string& format, Args&&... args)
-{
-    return spdlog::critical(format, std::forward<Args>(args)...);
-}
-
-template<typename... Args>
-inline void
 Warn(const std::string& origin, const std::string& format, Args&&... args)
 {
     return spdlog::warn("[{}] {}", origin, fmt::format(format, std::forward<Args>(args)...));
-}
-
-template<typename... Args>
-inline void
-Warn(const std::string& format, Args&&... args)
-{
-    return spdlog::warn(format, std::forward<Args>(args)...);
 }
 
 template<typename... Args>
@@ -132,23 +104,9 @@ Debug(const std::string& origin, const std::string& format, Args&&... args)
 
 template<typename... Args>
 inline void
-Debug(const std::string& format, Args&&... args)
-{
-    return spdlog::debug(format, std::forward<Args>(args)...);
-}
-
-template<typename... Args>
-inline void
 Trace(const std::string& origin, const std::string& format, Args&&... args)
 {
     return spdlog::trace("[{}] {}", origin, fmt::format(format, std::forward<Args>(args)...));
-}
-
-template<typename... Args>
-inline void
-Trace(const std::string& format, Args&&... args)
-{
-    return spdlog::trace(format, std::forward<Args>(args)...);
 }
 
 } // namespace log
