@@ -12,6 +12,12 @@ main()
 {
     util::log::SetLevel(static_cast<util::log::Level>(util::Config::get().logLevel));
 
-    Server server;
-    server.run();
+    try {
+        Server server;
+        server.run();
+    } catch (std::exception& ex) {
+        util::log::Critical("Server encountered fatal error: {}", ex.what());
+    }
+
+    return 0;
 }
