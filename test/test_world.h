@@ -39,7 +39,7 @@ struct TestSocket final : public net::Socket
     }
 };
 
-// NOTE: unfortunately these tests currently depend on the behavior of game::Handle(Opcode::Test)
+// NOTE: these tests currently depend on the behavior of game::Handle(Opcode::Test)
 
 TEST(World, Connect)
 {
@@ -100,7 +100,6 @@ TEST(WorldManager, Select)
     size_t numWorlds = 2u;
     auto wmgr = game::CreateWorldManager(numWorlds);
 
-    // opening N connections
     for (size_t i = 0; i < numWorlds; ++i) {
         auto socket = std::make_shared<TestSocket>();
         auto handler = wmgr->select();
@@ -108,7 +107,6 @@ TEST(WorldManager, Select)
         wmgr->get(handler->id())->update();
     }
 
-    // each world should have 1 player
     for (size_t i = 0; i < numWorlds; ++i) {
         EXPECT_EQ(wmgr->get(i)->size(), 1u);
     }

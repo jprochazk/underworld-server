@@ -4,6 +4,9 @@
 #include "server.hpp"
 // clang-format on
 
+// TODO: LUA infrastructure
+// TODO: DB infrastructure
+
 int
 main()
 {

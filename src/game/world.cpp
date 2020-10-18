@@ -216,15 +216,9 @@ public:
     start() override
     {
         // TODO: start/stop worlds based on some load-balancing algorithm
-        // allocate only one for now
-
-        // and start it on a separate thread
         for (auto& [id, world] : worlds_) {
             threads_.emplace(id, [this, id = id] { worlds_[id]->run(); });
         }
-        // for (size_t i = util::Config::get().threads; i > 0; --i) {
-        //    threads_.emplace(i, [&] { worlds_[i]->run(); });
-        //}
     }
 
     void

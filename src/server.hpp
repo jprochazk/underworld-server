@@ -11,8 +11,8 @@ class Server
 public:
     Server()
       : ioc{ util::Config::get().threads }
-      , signals{ ioc, SIGINT, SIGTERM }
-      , worldManager{ game::CreateWorldManager(util::Config::get().threads) }
+      , signals{ ioc, SIGINT, SIGTERM } // TODO: have more than 1 world at a time
+      , worldManager{ game::CreateWorldManager(1u /* util::Config::get().threads */) }
       , context{ ioc, worldManager }
       , updateInterval{ 1000. / static_cast<double>(util::Config::get().updateRate) }
     {
