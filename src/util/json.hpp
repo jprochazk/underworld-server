@@ -37,77 +37,33 @@ struct adl_serializer<std::optional<T>>
     }
 }; // struct adl_serializer<std::optional<T>>
 
-template<typename T, typename U = void>
+template<typename T, typename E = void>
 inline bool
-is_json_t(const json& json, T)
+is_json_t(const json& json)
 {
-    return json.is_null() || json.is_discarded();
-}
-template<typename T>
-inline bool
-is_json_t(const json& json, std::vector<T>)
-{
-    return json.is_array();
-}
-template<>
-inline bool
-is_json_t(const json& json, std::vector<uint8_t>)
-{
-    return json.is_binary();
-}
-template<>
-inline bool
-is_json_t(const json& json, std::string)
-{
-    return json.is_string();
-}
-template<>
-inline bool
-is_json_t(const json& json, uint8_t)
-{
-    return json.is_number_unsigned();
-}
-template<>
-inline bool
-is_json_t(const json& json, uint16_t)
-{
-    return json.is_number_unsigned();
-}
-template<>
-inline bool
-is_json_t(const json& json, uint32_t)
-{
-    return json.is_number_unsigned();
-}
-template<>
-inline bool
-is_json_t(const json& json, int8_t)
-{
-    return json.is_number_integer();
-}
-template<>
-inline bool
-is_json_t(const json& json, int16_t)
-{
-    return json.is_number_integer();
-}
-template<>
-inline bool
-is_json_t(const json& json, int32_t)
-{
-    return json.is_number_integer();
-}
-template<>
-inline bool
-is_json_t(const json& json, float)
-{
-    return json.is_number_float();
-}
-template<>
-inline bool
-is_json_t(const json& json, bool)
-{
-    return json.is_boolean();
+    if constexpr (std::is_same_v<bool, T>) {
+        return json.is_boolean();
+    } else if constexpr (std::is_same_v<float, T>) {
+        return json.is_number_float();
+    } else if constexpr (std::is_same_v<int32_t, T>) {
+        return json.is_number_integer();
+    } else if constexpr (std::is_same_v<int16_t, T>) {
+        return json.is_number_integer();
+    } else if constexpr (std::is_same_v<int8_t, T>) {
+        return json.is_number_integer();
+    } else if constexpr (std::is_same_v<uint32_t, T>) {
+        return json.is_number_unsigned();
+    } else if constexpr (std::is_same_v<uint16_t, T>) {
+        return json.is_number_unsigned();
+    } else if constexpr (std::is_same_v<uint8_t, T>) {
+        return json.is_number_unsigned();
+    } else if constexpr (std::is_class_v<T> && std::is_same_v<std::string, T>) {
+        return json.is_string();
+    } else if constexpr (std::is_class_v<T> && std::is_same_v<std::vector<uint8_t>, std::vector<E>>) {
+        return json.is_binary();
+    } else if constexpr (std::is_class_v<T> && std::is_same_v<std::vector<E>, T>) {
+        return json.is_array();
+    }
 }
 
 } // namespace nlohmann
@@ -121,8 +77,13 @@ try_get_to(const json& json, std::string_view name, T& value)
 {
     auto v = json.find(name);
     if (v != json.end()) {
-        if (!nlohmann::is_json_t<T>(*v, {}))
-            return;
+        if constexpr (std::is_class_v<T>) {
+            if (!nlohmann::is_json_t<T, typename T::value_type>(*v))
+                return;
+        } else {
+            if (!nlohmann::is_json_t<T>(*v))
+                return;
+        }
         v->get_to(value);
     }
 }
@@ -134,8 +95,13 @@ try_get_default(const json& json, std::string_view name, const T& value)
 {
     auto v = json.find(name);
     if (v != json.end()) {
-        if (!nlohmann::is_json_t<T>(*v, {}))
-            return value;
+        if constexpr (std::is_class_v<T>) {
+            if (!nlohmann::is_json_t<T, typename T::value_type>(*v))
+                return value;
+        } else {
+            if (!nlohmann::is_json_t<T>(*v))
+                return value;
+        }
         return v->get<T>();
     }
     return value;

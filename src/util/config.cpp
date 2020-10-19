@@ -19,7 +19,7 @@ Config::get()
         config.port = try_get_default<uint16_t>(cfgFile, "port", static_cast<uint16_t>(8080));
         config.threads = try_get_default<uint8_t>(cfgFile, "threads", static_cast<uint8_t>(1));
         config.updateRate = try_get_default<uint32_t>(cfgFile, "updateRate", static_cast<uint32_t>(60));
-        config.logLevel = static_cast<int>(log::FromString(try_get_default<std::string>(cfgFile, "logLevel", "info")));
+        auto logLevel = try_get_default<std::string>(cfgFile, "logLevel", "info");
 
         loaded = true;
     }
