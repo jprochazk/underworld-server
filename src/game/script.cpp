@@ -1,4 +1,5 @@
 #include "game/script.hpp"
+#include "sol/forward.hpp"
 #include "util/log.hpp"
 #include "util/time.hpp"
 #include <shared_mutex>
@@ -13,12 +14,30 @@ namespace game {
 
 namespace script {
 
-// Globally, I need to store two things:
-// 1. Script bytecode
-// 2. API bindings
+void
+Initialize(sol::state& state)
+{
+    state.open_libraries();
 
-// To test the system, try to return the current time from a script,
-// where the script calls a C++ function to retrieve the time as a string
+    sol::table game = state.create_table("game");
+
+    sol::table util = state.create_table("util");
+
+    // util.time
+    sol::table time = util.create("time");
+    time.new_usertype<util::time::Date>("Date");
+    time.new_usertype<util::time::Duration>("Duration");
+    time["now"] = []() -> util::time::Date { return util::time::Now(); };
+
+    // util.log
+    sol::table log = util.create("log");
+    log["trace"] = [](std::string message) -> void { util::log::Trace("LUA", "{}", message); };
+    log["debug"] = [](std::string message) -> void { util::log::Debug("LUA", "{}", message); };
+    log["info"] = [](std::string message) -> void { util::log::Info("LUA", "{}", message); };
+    log["warn"] = [](std::string message) -> void { util::log::Warn("LUA", "{}", message); };
+    log["error"] = [](std::string message) -> void { util::log::Error("LUA", "{}", message); };
+    log["critical"] = [](std::string message) -> void { util::log::Critical("LUA", "{}", message); };
+}
 
 struct
 {
@@ -53,7 +72,7 @@ Load(const std::string& path)
                     throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
                 }
 
-                global.scripts.storage.emplace(path, (sol::function{ result }).dump());
+                global.scripts.storage.insert_or_assign(path, (sol::function{ result }).dump());
             }
         }
     } else if (fs::is_regular_file(file)) {
@@ -65,42 +84,29 @@ Load(const std::string& path)
             throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
         }
 
-        global.scripts.storage.emplace(path, (sol::function{ result }).dump());
+        global.scripts.storage.insert_or_assign(path, (sol::function{ result }).dump());
     }
 }
 
-sol::function
-Get(const std::string& path, sol::state& state)
+Context::Context()
+  : state()
+  , cache()
 {
-    std::shared_lock lock{ global.scripts.mutex };
-
-    if (auto it = global.scripts.storage.find(path); it != global.scripts.storage.end()) {
-        return state.load(it->second.as_string_view());
-    } else {
-        throw std::runtime_error{ fmt::format("Script \"{}\" not found", path) };
-    }
+    Initialize(state);
 }
 
 void
-Initialize(sol::state& state)
+Context::retrieve(const std::string& path)
 {
-    state.open_libraries();
+    std::shared_lock lock{ global.scripts.mutex };
+    sol::function loaded = state.load(global.scripts.storage.at(path).as_string_view());
+    cache.insert_or_assign(path, loaded);
+}
 
-    sol::table game = state.create_table("game");
-
-    sol::table util = state.create_table("util");
-    sol::table time = util.create("time");
-    time.new_usertype<util::time::Date>("Date");
-    time.new_usertype<util::time::Duration>("Duration");
-    time["now"] = [&]() -> util::time::Date { return util::time::Now(); };
-
-    sol::table log = util.create("log");
-    log["trace"] = [&](std::string message) -> void { util::log::Trace("LUA", "{}", message); };
-    log["debug"] = [&](std::string message) -> void { util::log::Debug("LUA", "{}", message); };
-    log["info"] = [&](std::string message) -> void { util::log::Info("LUA", "{}", message); };
-    log["warn"] = [&](std::string message) -> void { util::log::Warn("LUA", "{}", message); };
-    log["error"] = [&](std::string message) -> void { util::log::Error("LUA", "{}", message); };
-    log["critical"] = [&](std::string message) -> void { util::log::Critical("LUA", "{}", message); };
+sol::function_result
+Context::eval(const std::string& code)
+{
+    return state.script(code);
 }
 
 } // namespace script

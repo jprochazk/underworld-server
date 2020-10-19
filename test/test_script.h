@@ -4,41 +4,11 @@
 #include "util/time.hpp"
 #include <string>
 
-TEST(Script, Initialize)
-{
-    using namespace game;
-
-    sol::state state;
-    script::Initialize(state);
-
-    auto result = state.script("return string.format(\"pi = %.4f\", math.pi)");
-    EXPECT_EQ(result.get<std::string>(), std::string{ "pi = 3.1416" });
-}
-
-TEST(Script, Date)
-{
-    using namespace game;
-
-    sol::state state;
-    script::Initialize(state);
-
-    auto now = util::time::Now();
-    util::time::Date result = state.script("return util.time.now()");
-    EXPECT_TRUE(result > now);
-}
-
 TEST(Script, Load_File)
 {
     using namespace game;
 
     script::Load("scripts/test.lua");
-
-    sol::state state;
-    script::Initialize(state);
-
-    auto now = util::time::Now();
-    util::time::Date result = script::Get("scripts/test.lua", state)();
-    EXPECT_TRUE(result > now);
 }
 
 TEST(Script, Load_Directory)
@@ -46,11 +16,46 @@ TEST(Script, Load_Directory)
     using namespace game;
 
     script::Load("scripts");
+}
 
-    sol::state state;
-    script::Initialize(state);
+TEST(Script, Context)
+{
+    using namespace game;
+
+    script::Load("scripts");
+    script::Context context;
+
+    auto result = context.eval("return string.format(\"pi = %.4f\", math.pi)");
+    EXPECT_EQ(result.get<std::string>(), std::string{ "pi = 3.1416" });
+}
+
+TEST(Script, Date)
+{
+    using namespace game;
+
+    script::Load("scripts");
+    script::Context context;
 
     auto now = util::time::Now();
-    util::time::Date result = script::Get("scripts/test.lua", state)();
+    util::time::Date result = context.eval("return util.time.now()");
+    EXPECT_TRUE(result > now);
+}
+
+TEST(Script, Execute)
+{
+    using namespace game;
+
+    // pre-load scripts
+    script::Load("scripts");
+    script::Context context;
+
+    // try to execute a script
+    auto now = util::time::Now();
+    util::time::Date result = context.execute("scripts/test.lua");
+    EXPECT_TRUE(result > now);
+
+    // and one from a nested directory
+    now = util::time::Now();
+    result = context.execute("scripts/test_dir/test.lua");
     EXPECT_TRUE(result > now);
 }

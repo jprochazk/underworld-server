@@ -5,31 +5,54 @@
 // 1. Independent LUA states
 // 2. Easily extend API
 
+#include "sol/forward.hpp"
 #include <string>
 #ifndef NDEBUG
 #    define SOL_ALL_SAFETIES_ON 1
 #endif
 #include <sol/sol.hpp>
 
-namespace sol {
-class state;
-}
+// 1. script::Context
+//      -> Load(path)
+//      -> Execute(path, args...)
 
 namespace game {
 
 namespace script {
 
-// Load a script
+// Load (or reload) one or more scripts from a file/directory
+//
+// @throws If file not found, or if script is not valid
 void Load(const std::string& path);
 
-// Retrieve a script
-// The script must be loaded before it can be retrieved
-//
-// @throws if not found
-sol::function Get(const std::string& path, sol::state& state);
+class Context
+{
+public:
+    Context();
 
-// Load game API and scripts into State
-void Initialize(sol::state&);
+    // Execute a script
+    //
+    // @throws If script not found, or if script execution throws
+    template<typename... Args>
+    inline auto
+    execute(const std::string& path, Args... args)
+    {
+        if (auto it = cache.find(path); it != cache.end()) {
+            return it->second.call(std::forward<Args>(args)...);
+        } else {
+            retrieve(path);
+            return cache[path].call(std::forward<Args>(args)...);
+        }
+    }
+
+    sol::function_result eval(const std::string& code);
+
+private:
+    void retrieve(const std::string& path);
+
+    sol::state state;
+    std::unordered_map<std::string, sol::function> cache;
+};
 
 } // namespace script
 

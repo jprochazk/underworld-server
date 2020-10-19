@@ -32,17 +32,23 @@ namespace game {
 
 struct Player;
 
+namespace script {
+class Context;
+}
+
 // Can be used to provide extra things to the opcode handlers
 // without having to modify the signature
 struct Context
 {
     Player& player;
+    script::Context& script;
 };
 
 enum Opcode : uint16_t
 {
     Test = 0,
-    Jump = 1
+    Jump = 1,
+    REPL = 2
 };
 
 // TODO: change this to be something more easily testable

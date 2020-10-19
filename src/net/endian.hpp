@@ -221,6 +221,8 @@ reverse_inplace(T& x) noexcept
     x = reverse(x);
 }
 
+// This is dead code, but it may be useful in the future.
+/*
 // reverse_inplace for arrays
 
 template<class T, std::size_t N>
@@ -230,9 +232,6 @@ inline void reverse_inplace(T (&x)[N]) noexcept
         reverse_inplace(x[i]);
     }
 }
-
-// This is dead code, but it may be useful in the future.
-/*
 template<class T>
 inline void
 network_order(T& x) noexcept

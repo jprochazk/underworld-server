@@ -1,6 +1,7 @@
 #include "game/world.hpp"
 #include "game/handler.hpp"
 #include "game/player.hpp"
+#include "game/script.hpp"
 #include "net/net.hpp"
 #include "util/util.hpp"
 #include <atomic>
@@ -106,6 +107,7 @@ public:
       , players_{}
       , updateInterval_{ 1000. / static_cast<double>(util::Config::get().updateRate) }
       , stop_{ false }
+      , script_{}
     {}
 
     uint16_t
@@ -140,14 +142,16 @@ public:
     void
     update() override
     {
+        // each connection is a new player
         for (auto& connection : msgHandler_->getConnections()) {
             if (auto socket = connection.lock()) {
+                // TODO: query player info from DB at some point
                 players_.emplace(socket->getId(), Player::create(registry_, connection));
             }
         }
 
         for (auto& [id, packet] : msgHandler_->getMessages()) {
-            // minimum size is sizeof(Opcode), which is uint16_t
+            // check for minimum packet size
             if (packet.size() < sizeof(Opcode))
                 continue;
 
@@ -157,7 +161,7 @@ public:
                 uint16_t opcode;
                 packet.read(opcode);
 
-                Context context{ player };
+                Context context{ player, script_ };
                 game::Handle(context, (Opcode)opcode, packet);
             }
         }
@@ -191,6 +195,7 @@ private:
     std::unordered_map<uint32_t, Player> players_;
     double updateInterval_;
     std::atomic_bool stop_;
+    script::Context script_;
 }; // class WorldImpl
 
 std::shared_ptr<World>

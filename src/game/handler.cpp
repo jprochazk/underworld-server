@@ -1,9 +1,12 @@
 
-#include "game/handler.hpp"
-#include "game/player.hpp"
-#include "game/world.hpp"
+#include "net/handler.hpp"
 #include "net/packet.hpp"
 #include "net/socket.hpp"
+
+#include "game/handler.hpp"
+#include "game/player.hpp"
+#include "game/script.hpp"
+#include "game/world.hpp"
 #include "util/log.hpp"
 
 template<typename T>
@@ -44,6 +47,30 @@ handle(game::Context& context, Jump&)
     util::log::Debug("Jump", "Player {{ Session {{ id: {} }} }}", context.player.getSocket()->getId());
 }
 
+struct REPL
+{
+    std::string code;
+};
+template<>
+void
+handle(game::Context& context, REPL& repl)
+{
+    if (!context.player.valid())
+        return;
+
+    if (auto sock = context.player.getSocket()) {
+        try {
+            std::string result = context.script.eval(repl.code);
+            net::Packet packet;
+            packet.write(result);
+        } catch (sol::error& e) {
+            net::Packet packet;
+            std::string error = e.what();
+            packet.write(error);
+        }
+    }
+}
+
 template<typename T>
 void
 DeserializeAndDispatch(game::Context& context, net::Packet& packet)
@@ -65,5 +92,7 @@ game::Handle(game::Context& context, game::Opcode opcode, net::Packet& packet)
             return DeserializeAndDispatch<struct Test>(context, packet);
         case Opcode::Jump:
             return DeserializeAndDispatch<struct Jump>(context, packet);
+        case Opcode::REPL:
+            return DeserializeAndDispatch<struct REPL>(context, packet);
     }
 }

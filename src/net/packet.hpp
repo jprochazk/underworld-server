@@ -2,7 +2,6 @@
 #define SERVER_NET_PACKET_HPP_
 
 #include "boost/pfr.hpp"
-#include "boost/pfr/precise/core.hpp"
 #include "net/endian.hpp"
 #include "util/log.hpp"
 #include <cstddef>
@@ -35,8 +34,7 @@ public:
       , buffer_{ data, data + size }
     {}
 
-    // Allows for deserializing fundamental types (int, float, etc)
-    // or POD types (standard layout and trivially constructible, such as C-structs)
+    // Allows for deserializing fundamental types (int, float, etc) or standard-layout types (C-structs)
     //
     // @throws when out of bounds
     template<typename T>
@@ -49,7 +47,8 @@ public:
             throw std::runtime_error{ "Packet index out of bounds" };
         }
 #endif
-        static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
+        static_assert(std::is_fundamental_v<T> || std::is_standard_layout_v<T>,
+                      "Data must be fundamental or standard layout.");
 
         if constexpr (std::is_fundamental_v<T>) {
             // if we're deserializing a fundamental type
@@ -75,24 +74,37 @@ public:
         return *this;
     }
 
-    // Allows for serializing vectors of fundamental or POD types
+    // Allows for deserializing vectors of fundamental or POD types
     //
     // @throws when out of bounds
     template<typename T>
     Packet&
-    read(std::vector<T>& data, std::size_t count)
+    read(std::vector<T>& data)
     {
-        // assert that we have enough data
+        uint16_t count;
+        read<uint16_t>(count);
 
-#ifndef NDEBUG
-        if (!(size() >= cursor_ + (count * sizeof(T)))) {
-            throw std::runtime_error{ "Packet index out of bounds" };
-        }
-#endif
-        // then resize and read
         data.resize(count);
         for (size_t i = 0; i < count; ++i) {
-            read(data[i]);
+            read<T>(data[i]);
+        }
+
+        return *this;
+    }
+
+    // Allows for deserializing strings
+    //
+    // @throws when out of bounds
+    template<typename T = char>
+    Packet&
+    read(std::basic_string<T>& data)
+    {
+        uint16_t count;
+        read<uint16_t>(count);
+
+        data.resize(count);
+        for (size_t i = 0; i < count; ++i) {
+            read<T>(data[i]);
         }
 
         return *this;
@@ -140,8 +152,22 @@ public:
     Packet&
     write(const std::vector<T>& data)
     {
+        write<uint16_t>(static_cast<uint16_t>(data.size()));
+
         for (const auto& el : data) {
-            write(el);
+            write<T>(el);
+        }
+        return *this;
+    }
+
+    template<typename T = char>
+    Packet&
+    write(const std::basic_string<T>& data)
+    {
+        write<uint16_t>(static_cast<uint16_t>(data.size()));
+
+        for (const auto& el : data) {
+            write<T>(el);
         }
         return *this;
     }
@@ -210,9 +236,9 @@ public:
     }
 
     bool
-    operator==(const Packet& other)
+    equals(const Packet& other) const
     {
-        return buffer_ == other.buffer_;
+        return (buffer_ == other.buffer_);
     }
 
 private:
@@ -221,5 +247,11 @@ private:
 }; // class Packet
 
 } // namespace net
+
+inline bool
+operator==(const net::Packet& a, const net::Packet& b)
+{
+    return a.equals(b);
+}
 
 #endif // SERVER_NET_PACKET_HPP_
