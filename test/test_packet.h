@@ -2,46 +2,6 @@
 #include "net/packet.hpp"
 #include <gtest/gtest.h>
 
-// POD-type for tests below
-struct Type_POD
-{
-    uint32_t foo;
-    uint32_t bar;
-    float baz;
-
-    bool
-    operator==(const Type_POD& other) const
-    {
-        return foo == other.foo && bar == other.bar && baz == other.baz;
-    }
-};
-
-// Non-trivial type for tests below
-struct Type_NT
-{
-    uint32_t foo;
-    std::string bar;
-    std::vector<float> baz;
-
-    bool
-    operator==(const Type_NT& other) const
-    {
-        return foo == other.foo && bar == other.bar && baz == other.baz;
-    }
-};
-
-template<>
-inline bool
-net::Deserialize(net::Packet& packet, Type_NT& data)
-{
-    if (packet.remaining() < sizeof(data.foo) + sizeof(uint16_t) + sizeof(uint16_t))
-        return false;
-    net::Deserialize(packet, data.foo);
-    net::Deserialize(packet, data.bar);
-    net::Deserialize(packet, data.baz);
-    return true;
-}
-
 // TODO: debug this
 
 TEST(Packet, Read_Arithmetic)
@@ -60,6 +20,20 @@ TEST(Packet, Write_Arithmetic)
     net::Serialize(actual, input);
     EXPECT_EQ(actual, expected);
 }
+
+struct Type_POD
+{
+    uint32_t foo;
+    uint32_t bar;
+    float baz;
+
+    bool
+    operator==(const Type_POD& other) const
+    {
+        return foo == other.foo && bar == other.bar && baz == other.baz;
+    }
+};
+
 TEST(Packet, Read_POD)
 {
     Type_POD expected = { 1234567890u, 1234567890u, 10.5 };
@@ -126,24 +100,68 @@ TEST(Packet, Write_Vector_String)
     net::Serialize(actual, input);
     EXPECT_EQ(actual, expected);
 }
-/* TODO: write these :)
+
+// Non-trivial type for tests below
+struct Type_NT
+{
+    uint32_t foo;
+    std::string bar;
+    std::vector<float> baz;
+
+    bool
+    operator==(const Type_NT& other) const
+    {
+        return foo == other.foo && bar == other.bar && baz == other.baz;
+    }
+};
+
+template<>
+inline bool
+net::Deserialize(net::Packet& packet, Type_NT& data)
+{
+    if (packet.remaining() < sizeof(data.foo) + sizeof(uint16_t) + sizeof(uint16_t))
+        return false;
+    net::Deserialize(packet, data.foo);
+    net::Deserialize(packet, data.bar);
+    net::Deserialize(packet, data.baz);
+    return true;
+}
+template<>
+inline void
+net::Serialize(net::Packet& packet, const Type_NT& data)
+{
+    net::Serialize(packet, data.foo);
+    net::Serialize(packet, data.bar);
+    net::Serialize(packet, data.baz);
+}
+
+// TODO: write these :)
 TEST(Packet, Read_Non_Trivial)
 {
-    // Read:
-    // 1. expected value
-    // 2. input packet
-    // 3. actual value
-    // 4. assert actual == expected
+    Type_NT expected = { 123u, "test", { 10.5, 10.5 } };
+    net::Packet input = { 0x7B, 0x00, 0x00, 0x00, 0x04, 0x00, 0x74, 0x65, 0x73, 0x74,
+                          0x02, 0x00, 0x00, 0x00, 0x28, 0x41, 0x00, 0x00, 0x28, 0x41 };
+    auto actual = Type_NT{};
+    net::Deserialize(input, actual);
+    EXPECT_EQ(actual, expected);
 }
 TEST(Packet, Write_Non_Trivial)
 {
-    // Write:
-    // 1. expected packet
-    // 2. input value
-    // 3. actual packet
-    // 4. assert actual == expected
+    /* Type_NT expected = { 123u, "test", { 10.5, 10.5 } };
+    net::Packet input = { 0x7B, 0x00, 0x00, 0x00, 0x04, 0x00, 0x74, 0x65, 0x73, 0x74,
+                          0x02, 0x00, 0x00, 0x00, 0x28, 0x41, 0x00, 0x00, 0x28, 0x41 };
+    auto actual = Type_NT{};
+    net::Deserialize(input, actual);
+    EXPECT_EQ(actual, expected); */
+
+    net::Packet expected = { 0x7B, 0x00, 0x00, 0x00, 0x04, 0x00, 0x74, 0x65, 0x73, 0x74,
+                             0x02, 0x00, 0x00, 0x00, 0x28, 0x41, 0x00, 0x00, 0x28, 0x41 };
+    Type_NT input = { 123u, "test", { 10.5, 10.5 } };
+    auto actual = net::Packet{};
+    net::Serialize(actual, input);
+    EXPECT_EQ(actual, expected);
 }
-TEST(Packet, Read_Vector_Non_Trivial)
+/* TEST(Packet, Read_Vector_Non_Trivial)
 {
     // Read:
     // 1. expected value
@@ -159,5 +177,4 @@ TEST(Packet, Write_Vector_Non_Trivial)
     // 2. input value
     // 3. actual packet
     // 4. assert actual == expected
-}
- */
+} */

@@ -167,6 +167,8 @@ public:
     inline uint8_t& operator[](size_t pos) { return buffer_[pos]; }
     inline uint8_t operator[](size_t pos) const { return buffer_[pos]; }
 
+    inline operator std::vector<uint8_t>() { return buffer_; }
+
 private:
     size_t cursor_;
     std::vector<uint8_t> buffer_;
