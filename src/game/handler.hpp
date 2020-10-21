@@ -46,8 +46,8 @@ struct Context
 
 enum Opcode : uint16_t
 {
-    Test = 0,
-    Jump = 1,
+    TEST = 0,
+    JUMP = 1,
     REPL = 2
 };
 

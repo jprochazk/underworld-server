@@ -9,16 +9,12 @@
 #include "game/world.hpp"
 #include "util/log.hpp"
 
-template<typename T>
-void handle(game::Context& context, T& packet);
-
 struct Test
 {
     uint16_t value;
 };
-template<>
 void
-handle(game::Context& context, Test& packet)
+handle_Test(game::Context& context, Test& packet)
 {
     if (!context.player.valid())
         return;
@@ -34,9 +30,8 @@ handle(game::Context& context, Test& packet)
 
 struct Jump
 {};
-template<>
 void
-handle(game::Context& context, Jump&)
+handle_Jump(game::Context& context, Jump&)
 {
     if (!context.player.valid())
         return;
@@ -44,7 +39,7 @@ handle(game::Context& context, Jump&)
     auto socket = context.player.getSocket();
     if (!socket)
         return;
-    util::log::Debug("Jump", "Player {{ Session {{ id: {} }} }}", context.player.getSocket()->getId());
+    util::log::Debug("Jump", "[Session#{}]", context.player.getSocket()->getId());
 }
 
 struct REPL
@@ -52,47 +47,65 @@ struct REPL
     std::string code;
 };
 template<>
+inline bool
+net::Deserialize(net::Packet& packet, REPL& repl)
+{
+    if (packet.remaining() < sizeof(uint16_t))
+        return false;
+    net::Deserialize(packet, repl.code);
+    return true;
+}
 void
-handle(game::Context& context, REPL& repl)
+handle_REPL(game::Context& context, REPL& repl)
 {
     if (!context.player.valid())
         return;
 
     if (auto sock = context.player.getSocket()) {
+        net::Packet packet{};
+        util::log::Debug("REPL", "[Session#{}]: Input = {}", sock->getId(), repl.code);
         try {
-            std::string result = context.script.eval(repl.code);
-            net::Packet packet;
-            packet.write(result);
-        } catch (sol::error& e) {
-            net::Packet packet;
+            auto result = context.script.eval(repl.code);
+            if (!result.valid()) {
+                net::Serialize(packet, std::string{ "Invalid result" });
+                util::log::Debug("REPL", "[Session#{}]: Error = {}", sock->getId(), "Invalid result");
+            } else if (result.get_type() != sol::type::string) {
+                net::Serialize(packet, std::string{ "Result must be string" });
+                util::log::Debug("REPL", "[Session#{}]: Error = {}", sock->getId(), "Result must be string");
+            } else {
+                net::Serialize(packet, result.get<std::string>());
+                util::log::Debug("REPL", "[Session#{}]: Output = {}", sock->getId(), result.get<std::string>());
+            }
+        } catch (std::exception& e) {
             std::string error = e.what();
-            packet.write(error);
+            net::Serialize(packet, error);
+            util::log::Debug("REPL", "[Session#{}]: Error = {}", sock->getId(), error);
         }
+        sock->send(packet);
     }
-}
-
-template<typename T>
-void
-DeserializeAndDispatch(game::Context& context, net::Packet& packet)
-{
-    if (packet.size() < packet.cursor() + sizeof(T))
-        return;
-
-    T message{};
-    packet.read(message);
-
-    handle(context, message);
 }
 
 void
 game::Handle(game::Context& context, game::Opcode opcode, net::Packet& packet)
 {
     switch (opcode) {
-        case Opcode::Test:
-            return DeserializeAndDispatch<struct Test>(context, packet);
-        case Opcode::Jump:
-            return DeserializeAndDispatch<struct Jump>(context, packet);
-        case Opcode::REPL:
-            return DeserializeAndDispatch<struct REPL>(context, packet);
+        case Opcode::TEST: {
+            ::Test t{};
+            if (!net::Deserialize(packet, t))
+                return;
+            return handle_Test(context, t);
+        }
+        case Opcode::JUMP: {
+            ::Jump j{};
+            if (!net::Deserialize(packet, j))
+                return;
+            return handle_Jump(context, j);
+        }
+        case Opcode::REPL: {
+            ::REPL r{};
+            if (!net::Deserialize(packet, r))
+                return;
+            return handle_REPL(context, r);
+        }
     }
 }

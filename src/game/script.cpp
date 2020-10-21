@@ -72,7 +72,7 @@ Load(const std::string& path)
                     throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
                 }
 
-                global.scripts.storage.insert_or_assign(path, (sol::function{ result }).dump());
+                global.scripts.storage.insert_or_assign(path, (sol::safe_function{ result }).dump());
             }
         }
     } else if (fs::is_regular_file(file)) {
@@ -84,7 +84,7 @@ Load(const std::string& path)
             throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
         }
 
-        global.scripts.storage.insert_or_assign(path, (sol::function{ result }).dump());
+        global.scripts.storage.insert_or_assign(path, (sol::safe_function{ result }).dump());
     }
 }
 
@@ -103,14 +103,14 @@ Context::retrieve(const std::string& path)
         Load(path);
     }
 
-    sol::function loaded = state.load(global.scripts.storage.at(path).as_string_view());
+    sol::safe_function loaded = state.load(global.scripts.storage.at(path).as_string_view());
     cache.insert_or_assign(path, loaded);
 }
 
-sol::function_result
+sol::safe_function_result
 Context::eval(const std::string& code)
 {
-    return state.script(code);
+    return state.safe_script(code);
 }
 
 } // namespace script

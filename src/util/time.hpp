@@ -29,7 +29,7 @@ using Instant = std::chrono::time_point<Clock, Duration>;
 struct Date : Instant
 {
     std::string
-    toString()
+    toString() const
     {
         auto tm_snapshot = detail::localtime(Clock::to_time_t(std::chrono::time_point<Clock, Clock::duration>(
           std::chrono::duration_cast<Clock::duration>(time_since_epoch()))));
@@ -38,6 +38,12 @@ struct Date : Instant
         return buffer;
     }
 }; // struct Date
+
+inline std::ostream&
+operator<<(std::ostream& os, const Date& date)
+{
+    return os << date.toString();
+}
 
 inline Date
 Now()

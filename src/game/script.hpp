@@ -1,20 +1,14 @@
 #ifndef SERVER_GAME_SCRIPT_HPP_
 #define SERVER_GAME_SCRIPT_HPP_
 
-// Requirements:
-// 1. Independent LUA states
-// 2. Easily extend API
-
 #include "sol/forward.hpp"
 #include <string>
 #ifndef NDEBUG
+#    define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
 #    define SOL_ALL_SAFETIES_ON 1
 #endif
+#define SOL_USE_BOOST 1
 #include <sol/sol.hpp>
-
-// 1. script::Context
-//      -> Load(path)
-//      -> Execute(path, args...)
 
 namespace game {
 
@@ -45,13 +39,13 @@ public:
         }
     }
 
-    sol::function_result eval(const std::string& code);
+    sol::safe_function_result eval(const std::string& code);
 
 private:
     void retrieve(const std::string& path);
 
     sol::state state;
-    std::unordered_map<std::string, sol::function> cache;
+    std::unordered_map<std::string, sol::safe_function> cache;
 };
 
 } // namespace script
