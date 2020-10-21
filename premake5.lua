@@ -186,7 +186,7 @@ function Common()
     -- runtime == "Debug" or "Release"
     runtime (conan_build_type)
     language "C++"
-    cppdialect "C++17"
+    cppdialect "C++20"
 
     conan_basic_setup()
 end
