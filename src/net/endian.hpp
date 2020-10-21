@@ -183,6 +183,10 @@ struct is_reversible_inplace
 // Requires:
 //   T is non-bool integral or scoped enumeration type
 
+#if NATIVE_ORDER == BIG_ENDIAN_ORDER
+#    error "Big Endian architecture is not supported!"
+#endif
+
 template<class T>
 inline constexpr typename std::enable_if<!std::is_class<T>::value, T>::type
 reverse(T x) noexcept

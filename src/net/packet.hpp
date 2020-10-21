@@ -1,7 +1,6 @@
 #ifndef SERVER_NET_PACKET_HPP_
 #define SERVER_NET_PACKET_HPP_
 
-#include "boost/pfr.hpp"
 #include "net/endian.hpp"
 #include "util/log.hpp"
 #include <cstddef>
@@ -23,153 +22,71 @@ public:
       : cursor_{ 0 }
       , buffer_{}
     {}
+    Packet(size_t size)
+      : cursor_{ 0 }
+      , buffer_(size)
+    {}
+
+    Packet(std::initializer_list<uint8_t> bytes)
+      : cursor_{ 0 }
+      , buffer_(bytes)
+    {}
+    Packet&
+    operator=(std::initializer_list<uint8_t> bytes)
+    {
+        buffer_ = bytes;
+        return *this;
+    }
+
     // Move-construct from a std::vector
     Packet(std::vector<uint8_t>&& buffer)
       : cursor_{ 0 }
       , buffer_{ std::move(buffer) }
     {}
+    Packet&
+    operator=(std::vector<uint8_t>&& buffer)
+    {
+        if (&buffer_ != &buffer) {
+            buffer_ = std::move(buffer);
+        }
+        return *this;
+    }
+
     // Copy-construct from a range
     Packet(uint8_t* data, size_t size)
       : cursor_{ 0 }
       , buffer_{ data, data + size }
     {}
 
-    // Allows for deserializing fundamental types (int, float, etc) or standard-layout types (C-structs)
-    //
-    // @throws when out of bounds
     template<typename T>
-    Packet&
+    void
+    read(T& data, size_t size)
+    {
+        std::memcpy(&data, buffer_.data() + cursor_, size);
+        cursor_ += size;
+    }
+
+    template<typename T>
+    void
     read(T& data)
     {
-        // assert that we have enough data
-#ifndef NDEBUG
-        if (!(size() >= cursor_ + sizeof(T))) {
-            throw std::runtime_error{ "Packet index out of bounds" };
-        }
-#endif
-        static_assert(std::is_fundamental_v<T> || std::is_standard_layout_v<T>,
-                      "Data must be fundamental or standard layout.");
-
-        if constexpr (std::is_fundamental_v<T>) {
-            // if we're deserializing a fundamental type
-            // copy the data from the internal buffer
-            std::memcpy(&data, buffer_.data() + cursor_, sizeof(T));
-            // reverse its endianness if on a little-endian platform
-            endian::reverse_inplace(data);
-            // move the cursor forward
-            cursor_ += sizeof(T);
-        } else if constexpr (std::is_pod_v<T>) {
-            // if we're deserializing a POD type
-            // iterate over each field in the POD - this can be a tuple, a plain array, or a struct
-            // deserializing each field individually
-            boost::pfr::for_each_field(data, [&](auto& value) {
-                // TODO: de-duplicate this code
-                // doing the same as above, with sizeof(value) instead of sizeof(T)
-                std::memcpy(&value, buffer_.data() + cursor_, sizeof(value));
-                endian::reverse_inplace(value);
-                cursor_ += sizeof(value);
-            });
-        }
-
-        return *this;
+        read(data, sizeof(T));
     }
 
-    // Allows for deserializing vectors of fundamental or POD types
-    //
-    // @throws when out of bounds
     template<typename T>
-    Packet&
-    read(std::vector<T>& data)
+    void
+    write(const T& data, size_t size)
     {
-        uint16_t count;
-        read<uint16_t>(count);
-
-        data.resize(count);
-        for (size_t i = 0; i < count; ++i) {
-            read<T>(data[i]);
-        }
-
-        return *this;
+        buffer_.resize(cursor_ + size);
+        std::memcpy(buffer_.data() + cursor_, &data, size);
+        cursor_ += size;
     }
 
-    // Allows for deserializing strings
-    //
-    // @throws when out of bounds
-    template<typename T = char>
-    Packet&
-    read(std::basic_string<T>& data)
-    {
-        uint16_t count;
-        read<uint16_t>(count);
-
-        data.resize(count);
-        for (size_t i = 0; i < count; ++i) {
-            read<T>(data[i]);
-        }
-
-        return *this;
-    }
-
-    // Allows for serializing fundamental types (int, float, etc)
-    // or POD types (standard layout and trivially constructible, such as C-structs)
     template<typename T>
-    Packet&
+    void
     write(const T& data)
     {
-        static_assert(std::is_fundamental_v<T> || std::is_pod_v<T>, "Data must be fundamental or POD.");
-
-        // If we don't have enough space, allocate more
-        if (buffer_.size() - cursor_ < sizeof(T)) {
-            buffer_.resize(cursor_ + sizeof(T));
-        }
-
-        if constexpr (std::is_fundamental_v<T>) {
-            // If we're serializing a fundamental type
-            // copy the value into the internal buffer
-            std::memcpy(buffer_.data() + cursor_, &data, sizeof(T));
-            // convert the endianness of what we just copied into the buffer
-            // here we're aliasing the buffer data pointer
-            endian::reverse_inplace(*(reinterpret_cast<T*>(buffer_.data() + cursor_)));
-            // move the cursor forward
-            cursor_ += sizeof(T);
-        } else if constexpr (std::is_pod_v<T>) {
-            boost::pfr::for_each_field(data, [&](const auto& value) {
-                // TODO: de-duplicate this code
-                // doing the same thing as above, just with sizeof(value) instead of sizeof(T)
-                std::memcpy(buffer_.data() + cursor_, &value, sizeof(value));
-                endian::reverse_inplace(
-                  *(reinterpret_cast<std::remove_const_t<std::remove_reference_t<decltype(value)>>*>(buffer_.data() +
-                                                                                                     cursor_)));
-                cursor_ += sizeof(value);
-            });
-        }
-
-        return *this;
-    }
-
-    // Allows for serializing vectors of fundamental or POD types
-    template<typename T>
-    Packet&
-    write(const std::vector<T>& data)
-    {
-        write<uint16_t>(static_cast<uint16_t>(data.size()));
-
-        for (const auto& el : data) {
-            write<T>(el);
-        }
-        return *this;
-    }
-
-    template<typename T = char>
-    Packet&
-    write(const std::basic_string<T>& data)
-    {
-        write<uint16_t>(static_cast<uint16_t>(data.size()));
-
-        for (const auto& el : data) {
-            write<T>(el);
-        }
-        return *this;
+        write(data, sizeof(T));
     }
 
     // Returns the internal cursor position
@@ -235,23 +152,107 @@ public:
         return buffer_.end();
     }
 
-    bool
-    equals(const Packet& other) const
+    size_t
+    remaining() const
+    {
+        return size() - cursor();
+    }
+
+    inline bool
+    operator==(const net::Packet& other) const
     {
         return (buffer_ == other.buffer_);
     }
+
+    inline uint8_t& operator[](size_t pos) { return buffer_[pos]; }
+    inline uint8_t operator[](size_t pos) const { return buffer_[pos]; }
 
 private:
     size_t cursor_;
     std::vector<uint8_t> buffer_;
 }; // class Packet
 
-} // namespace net
-
+template<typename T>
 inline bool
-operator==(const net::Packet& a, const net::Packet& b)
+Deserialize(Packet& packet, T& data)
 {
-    return a.equals(b);
+    static_assert(std::is_arithmetic_v<T> || (std::is_standard_layout_v<T> && std::is_trivial_v<T>),
+                  "Data is not trivial and has no better deserialize overload");
+    if (packet.remaining() < sizeof(T))
+        return false;
+    packet.read(data);
+    return true;
 }
+
+template<typename T>
+inline bool
+Deserialize(Packet& packet, std::basic_string<T>& str)
+{
+    uint16_t count;
+    if (!net::Deserialize(packet, count))
+        return false;
+
+    // NOTE: this is entirely arbitrary
+    if (count > 1024)
+        return false;
+
+    str.resize(count);
+    std::memcpy(str.data(), packet.data() + packet.cursor(), count);
+    packet.cursor(packet.cursor() + (str.size() * sizeof(T)));
+    return true;
+}
+
+template<typename T>
+inline bool
+Deserialize(Packet& packet, std::vector<T>& vec)
+{
+    uint16_t count;
+    if (!net::Deserialize(packet, count))
+        return false;
+
+    // NOTE: this is entirely arbitrary
+    if (count > 1024)
+        return false;
+
+    vec.resize(count);
+    for (auto& el : vec) {
+        Deserialize(packet, el);
+    }
+    return true;
+}
+
+template<typename T>
+inline void
+Serialize(Packet& packet, const T& data)
+{
+    static_assert(std::is_arithmetic_v<T> || (std::is_standard_layout_v<T> && std::is_trivial_v<T>),
+                  "Data is not trivial and has no better serialize overload");
+    packet.write(data);
+}
+
+// extra definitions for basic_string and vector
+template<typename T>
+inline void
+Serialize(Packet& packet, const std::basic_string<T>& str)
+{
+    packet.write(static_cast<uint16_t>(str.size()));
+
+    packet.resize(packet.cursor() + str.size());
+    std::memcpy(packet.data() + packet.cursor(), str.data(), str.size());
+    packet.cursor(packet.cursor() + (str.size() * sizeof(T)));
+}
+
+template<typename T>
+inline void
+Serialize(Packet& packet, const std::vector<T>& vec)
+{
+    packet.write(static_cast<uint16_t>(vec.size()));
+
+    for (auto& el : vec) {
+        Serialize(packet, el);
+    }
+}
+
+} // namespace net
 
 #endif // SERVER_NET_PACKET_HPP_
