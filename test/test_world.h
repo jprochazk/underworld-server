@@ -64,7 +64,7 @@ TEST(World, Message)
     EXPECT_EQ(world->size(), 1u);
 
     net::Packet pkt;
-    pkt.write(game::Opcode::Test);
+    pkt.write(game::Opcode::TEST);
     pkt.write(static_cast<uint16_t>(1u));
 
     handler->onMessage(0u, pkt.data(), pkt.size());
