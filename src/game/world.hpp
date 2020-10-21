@@ -3,8 +3,6 @@
 
 #include "net/handler.hpp"
 
-// TODO: implement WorldManager
-
 namespace game {
 
 class World
