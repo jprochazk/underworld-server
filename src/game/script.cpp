@@ -64,26 +64,24 @@ Load(const std::string& path)
                 Load(it->path().string());
             } else if (it->is_regular_file() && it->path().has_extension() &&
                        it->path().extension() == fs::path{ ".lua" }) {
-                std::unique_lock lock{ global.scripts.mutex };
-
                 auto path = it->path().string();
                 auto result = global.state.load_file(path);
                 if (!result.valid()) {
                     throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
                 }
 
+                std::unique_lock lock{ global.scripts.mutex };
                 global.scripts.storage.insert_or_assign(path, (sol::safe_function{ result }).dump());
             }
         }
     } else if (fs::is_regular_file(file)) {
-        std::unique_lock lock{ global.scripts.mutex };
-
         auto path = file.string();
         auto result = global.state.load_file(path);
         if (!result.valid()) {
             throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
         }
 
+        std::unique_lock lock{ global.scripts.mutex };
         global.scripts.storage.insert_or_assign(path, (sol::safe_function{ result }).dump());
     }
 }
@@ -100,8 +98,10 @@ Context::retrieve(const std::string& path)
 {
     std::shared_lock lock{ global.scripts.mutex };
     if (global.scripts.storage.find(path) == global.scripts.storage.end()) {
+        lock.unlock();
         Load(path);
     }
+    lock.lock();
 
     sol::safe_function loaded = state.load(global.scripts.storage.at(path).as_string_view());
     cache.insert_or_assign(path, loaded);
