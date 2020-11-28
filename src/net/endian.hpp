@@ -84,6 +84,12 @@
 #    define ENDIAN_INTRINSIC_MSG "no byte swap intrinsics"
 #endif // ENDIAN_NO_INTRINSICS
 
+#ifdef ENDIAN_CONSTEXPR_INTRINSICS
+#    define ENDIAN_CONSTEXPR constexpr
+#else
+#    define ENDIAN_CONSTEXPR
+#endif
+
 #include "util/log.hpp"
 #include <cstdint>
 #include <cstring>
@@ -130,12 +136,14 @@ struct is_scoped_enum
   : std::conditional<std::is_enum<T>::value, negation<std::is_convertible<T, int>>, std::false_type>::type
 {};
 
-inline uint8_t constexpr reverse_impl(uint8_t x) noexcept
+inline uint8_t ENDIAN_CONSTEXPR
+reverse_impl(uint8_t x) noexcept
 {
     return x;
 }
 
-inline uint16_t constexpr reverse_impl(uint16_t x) noexcept
+inline uint16_t ENDIAN_CONSTEXPR
+reverse_impl(uint16_t x) noexcept
 {
 #ifdef ENDIAN_NO_INTRINSICS
     return (x << 8) | (x >> 8);
@@ -144,7 +152,8 @@ inline uint16_t constexpr reverse_impl(uint16_t x) noexcept
 #endif
 }
 
-inline uint32_t constexpr reverse_impl(uint32_t x) noexcept
+inline uint32_t ENDIAN_CONSTEXPR
+reverse_impl(uint32_t x) noexcept
 {
 #ifdef ENDIAN_NO_INTRINSICS
     uint32_t step16 = x << 16 | x >> 16;
@@ -154,7 +163,8 @@ inline uint32_t constexpr reverse_impl(uint32_t x) noexcept
 #endif
 }
 
-inline uint64_t constexpr reverse_impl(uint64_t x) noexcept
+inline uint64_t ENDIAN_CONSTEXPR
+reverse_impl(uint64_t x) noexcept
 {
 #ifdef ENDIAN_NO_INTRINSICS
     uint64_t step32 = x << 32 | x >> 32;
@@ -188,7 +198,7 @@ struct is_reversible_inplace
 #endif
 
 template<class T>
-inline constexpr typename std::enable_if<!std::is_class<T>::value, T>::type
+inline ENDIAN_CONSTEXPR typename std::enable_if<!std::is_class<T>::value, T>::type
 reverse(T x) noexcept
 {
     static_assert(detail::is_reversible<T>::value);

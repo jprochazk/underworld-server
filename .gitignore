@@ -24,3 +24,7 @@ tests
 
 # config
 config.json
+
+# xmake
+build
+.xmake

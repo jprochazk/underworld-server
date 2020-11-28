@@ -17,7 +17,11 @@ inline std::tm
 localtime(const std::time_t& time)
 {
     std::tm tm_snapshot;
+#ifdef _WIN32
+    localtime_s(&tm_snapshot, &time);
+#else
     localtime_r(&time, &tm_snapshot);
+#endif
     return tm_snapshot;
 }
 } // namespace detail
