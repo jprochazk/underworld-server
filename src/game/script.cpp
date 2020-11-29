@@ -98,10 +98,12 @@ Context::retrieve(const std::string& path)
 {
     std::shared_lock lock{ global.scripts.mutex };
     if (global.scripts.storage.find(path) == global.scripts.storage.end()) {
+        // because Load also locks, we have to unlock here to avoid a deadlock
         lock.unlock();
         Load(path);
+        // and then lock again to ensure thread safety
+        lock.lock();
     }
-    lock.lock();
 
     sol::safe_function loaded = state.load(global.scripts.storage.at(path).as_string_view());
     cache.insert_or_assign(path, loaded);
