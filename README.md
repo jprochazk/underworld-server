@@ -6,50 +6,40 @@ This repository hosts the game server for an online browser-based platformer.
 
 To build the server, you need:
 * A C++17 compiler (clang, gcc)
-* [Conan 1.26.0+](https://conan.io/downloads.html)
-* Optionally, [Premake 5.0+](https://premake.github.io/download.html#v5)
-
-Premake ships as a single binary executable, which is included in this repository for convenience in the `vendor/premake` directory, which should run on all Linux distributions.
+* [Conan](https://conan.io/downloads.html)
+* [XMake](https://xmake.io/#/getting_started?id=installation)
 
 Run the following commands to verify that you've installed the prerequisites correctly:
 ```
 $ conan --version
-$ premake5 --version
-```
-
-To see the list of available commands and options, execute:
-```
-$ premake5 help
+$ xmake --version
 ```
 
 ### Build
 
-Currently, only Linux is supported. Windows/MacOS support is not planned.
+Both Windows and Linux builds are supported. 
 
-To build, execute the following:
+To configure and build, execute the following:
 ```
-$ premake5 install
-$ premake5 gmake2
-$ make server
+$ xmake
 ```
 
 Before running, optionally initialize the config:
 ```
 $ cp config.example.json config.json
 ```
-And fill in values as needed.
+And fill in any desired values.
 
-Finally, the server can be run as:
+Finally, the server can be run by executing:
 ```
-$ ./server
+$ xmake run server
 ```
-Which will start the server on the requested address/port, with the requested number of threads.
+Which will start the server on the address/port specified in the config, or the default `127.0.0.1:8080`.
 
 ### Tests
 
 Tests are written using [GoogleTest](https://github.com/google/googletest).
 
 ```
-$ make tests
-$ ./tests
+$ xmake run tests
 ```

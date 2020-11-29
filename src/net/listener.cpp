@@ -41,6 +41,7 @@ private:
         util::log::Error("Authenticator", "{}: {}", what, ec.message());
     }
 
+    // TODO: make this write async
     void
     write(http::status code)
     {
