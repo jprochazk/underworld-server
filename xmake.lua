@@ -17,6 +17,11 @@ target("server")
     add_files("src/**.cpp")
     add_includedirs("src")
 
+    if is_plat("linux") then
+        add_ldflags("-lpthread")
+        add_ldflags("-ldl")
+    end
+
     add_packages(
         "boost", 
         "spdlog", 
@@ -43,6 +48,11 @@ target("tests")
     -- test files
     add_files("test/main.cpp")
     add_includedirs("test")
+
+    if is_plat("linux") then
+        add_ldflags("-lpthread")
+        add_ldflags("-ldl")
+    end
     
     add_packages(
         "boost", 
