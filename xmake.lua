@@ -33,6 +33,9 @@ target("server")
         "gtest", 
         "sol2")
 
+    set_rundir("$(projectdir)")
+-- target("server")
+
 target("tests")
     set_kind("binary")
     set_languages("cxx17")
@@ -64,3 +67,6 @@ target("tests")
         "glm", 
         "gtest", 
         "sol2")
+
+    set_rundir("$(projectdir)")
+-- target("tests")
