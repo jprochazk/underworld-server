@@ -15,11 +15,14 @@ namespace game {
 // Helper fn to dequeue from a queue into a vector
 template<typename T>
 std::vector<T>
-dequeue_from(moodycamel::ConcurrentQueue<T>& queue, std::size_t count)
+dequeue_from(moodycamel::ConcurrentQueue<T>& queue, std::atomic_size_t& count)
 {
+    std::size_t lockedCount = count;
+    count -= lockedCount;
+
     std::vector<T> out;
-    out.resize(count, T{});
-    queue.try_dequeue_bulk(out.begin(), count);
+    out.resize(lockedCount, T{});
+    queue.try_dequeue_bulk(out.begin(), lockedCount);
     return out;
 }
 
@@ -63,6 +66,7 @@ public:
         void
         onClose(uint32_t id) override
         {
+            spdlog::debug("Closed connection {}", id);
             queues.close.enqueue(id);
             queues.cclose++;
         }
@@ -167,6 +171,7 @@ public:
         }
 
         for (auto& id : msgHandler_->getDisconnections()) {
+            spdlog::debug("closed {}", id);
             if (auto it = players_.find(id); it != players_.end()) {
                 auto& [socketId, player] = *it;
                 player.destroy();

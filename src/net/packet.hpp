@@ -15,6 +15,11 @@
 
 namespace net {
 
+// TODO: refactor this
+// #1: low-level takes a pointer and size, and does a cursor increment + resize + memcpy
+// #2: high-level API adds abstractions for serializing containers (strings, vectors, maps)
+//     and allows for overloading to serialize arbitrary types
+
 class Packet
 {
 public:
@@ -164,8 +169,16 @@ public:
         return (buffer_ == other.buffer_);
     }
 
-    inline uint8_t& operator[](size_t pos) { return buffer_[pos]; }
-    inline uint8_t operator[](size_t pos) const { return buffer_[pos]; }
+    inline uint8_t&
+    operator[](size_t pos)
+    {
+        return buffer_[pos];
+    }
+    inline uint8_t
+    operator[](size_t pos) const
+    {
+        return buffer_[pos];
+    }
 
     inline operator std::vector<uint8_t>() { return buffer_; }
 

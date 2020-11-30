@@ -36,6 +36,7 @@ public:
     virtual ~SocketImpl() override
     {
         // metrics::disconnection();
+        util::log::Debug("~SocketImpl", "Closed socket ID {}", id_);
         handler_->onClose(id_);
     }
 
