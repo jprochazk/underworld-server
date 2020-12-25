@@ -33,6 +33,7 @@ enum class Level : int
 inline std::string
 ToString(Level level)
 {
+    // TODO: do a switch statement instead
     static const std::unordered_map<util::log::Level, std::string> logLevels = {
         { util::log::Level::Trace, "trace" }, { util::log::Level::Debug, "debug" },
         { util::log::Level::Info, "info" },   { util::log::Level::Warn, "warn" },
@@ -49,6 +50,7 @@ ToString(Level level)
 inline util::log::Level
 FromString(std::string level)
 {
+    // TODO: do a switch statement instead
     const std::unordered_map<std::string, util::log::Level> logLevels = {
         { "trace", util::log::Level::Trace }, { "debug", util::log::Level::Debug },
         { "info", util::log::Level::Info },   { "warn", util::log::Level::Warn },

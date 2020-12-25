@@ -52,6 +52,7 @@ private:
     void
     onRead(beast::error_code ec, std::size_t)
     {
+        // TODO: properly handle errors here by sending an error code and possibly message
         if (ec == http::error::end_of_stream) {
             stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
         }

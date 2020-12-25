@@ -4,6 +4,8 @@
 #include "net/boost.hpp"
 #include <memory>
 
+// TODO: documentation
+
 namespace net {
 
 class Router;

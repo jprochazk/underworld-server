@@ -4,19 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 
-/*
-socket onAccept -> choose world by population/ID (abstracted through WorldManager)
-        -> connect (returns World as net::Handler)
-        -> handler = world
-        -> start read loop
-
-World : net::Handler
-        onOpen(ref<socket>) -> enqueue(Player::Connect{ socket->id(), ref<socket> })
-        onClose(ref<socket>) -> enqueue(Player::Disconnect{ socket->id(), ref<socke> })
-        onMessage(ref<socket>, data) -> enqueue(Player::Message{ socket->id(), data })
-        onError(ref<socket>, error) -> game::Handle(Player::Error{ socket->id(), error })
-*/
-
 /// To add new Opcodes + Handlers:
 /// 1. Add the opcode into the Opcode enum
 /// 2. Add it as a case into the switch statement @handler.cpp

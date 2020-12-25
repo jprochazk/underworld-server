@@ -8,21 +8,21 @@ TEST(Script, Load_File)
 {
     using namespace game;
 
-    script::Load("scripts/test.lua");
+    script::Load("test/scripts/test.lua");
 }
 
 TEST(Script, Load_Directory)
 {
     using namespace game;
 
-    script::Load("scripts");
+    script::Load("test/scripts");
 }
 
 TEST(Script, Context)
 {
     using namespace game;
 
-    script::Load("scripts");
+    script::Load("test/scripts");
     script::Context context;
 
     auto result = context.eval("return string.format(\"pi = %.4f\", math.pi)");
@@ -33,7 +33,7 @@ TEST(Script, Date)
 {
     using namespace game;
 
-    script::Load("scripts");
+    script::Load("test/scripts");
     script::Context context;
 
     auto now = util::time::Now();
@@ -46,16 +46,16 @@ TEST(Script, Execute)
     using namespace game;
 
     // pre-load scripts
-    script::Load("scripts");
+    script::Load("test/scripts");
     script::Context context;
 
     // try to execute a script
     auto now = util::time::Now();
-    util::time::Date result = context.execute("scripts/test.lua");
+    util::time::Date result = context.execute("test/scripts/test.lua");
     EXPECT_TRUE(result > now);
 
     // and one from a nested directory
     now = util::time::Now();
-    result = context.execute("scripts/test_dir/test.lua");
+    result = context.execute("test/scripts/test_dir/test.lua");
     EXPECT_TRUE(result > now);
 }

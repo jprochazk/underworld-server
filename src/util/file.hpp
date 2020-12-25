@@ -15,6 +15,7 @@ LoadFile(const std::string& path, std::string& out)
     beast::file file;
     beast::error_code ec;
     file.open(path.c_str(), beast::file_mode::read, ec);
+    // TODO: make this DRY
     if (ec) {
         out.clear();
         return log::Error("LoadFile", "Failed to load \"{}\": {}", path, ec.message());

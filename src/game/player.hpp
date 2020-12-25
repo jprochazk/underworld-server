@@ -14,17 +14,22 @@ namespace game {
 
 // Thin wrapper over entt registry & entity
 //
-// Constructing/destructing a Player is not analogous to creating/destroying one in the entt::registry.
-// This is just a helper struct to manipulate existing data in the registry.
+// Constructing/destructing a Player is not the same as creating/destroying one in the entt::registry.
+// This is just a wrapper to an already existing player in the registry.
 struct Player
 {
     entt::entity entity;
     entt::registry& registry;
 
+    // TODO: name this something other than create, it's a bit misleading
+    // maybe "build"?
+
     // Create a Player from its parts
     //
     // This creates a new entity, and emplaces all the necessary components into it
     static Player create(entt::registry& registry, std::weak_ptr<net::Socket> socket);
+
+    // TODO: static
 
     // Destroy a Player
     //

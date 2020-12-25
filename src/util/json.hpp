@@ -11,6 +11,8 @@
 #include <vector>
 using json = nlohmann::json;
 
+// TODO: document this
+
 namespace nlohmann {
 
 template<typename T>

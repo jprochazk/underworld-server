@@ -3,6 +3,8 @@
 
 #include <atomic>
 
+// TODO: move signal to util::
+
 namespace boost::system {
 class error_code;
 }

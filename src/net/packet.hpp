@@ -13,6 +13,8 @@
 #    include <stdexcept>
 #endif
 
+// TODO: documentation
+
 namespace net {
 
 // TODO: refactor this

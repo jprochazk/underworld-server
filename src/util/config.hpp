@@ -15,6 +15,7 @@ struct Config
     uint16_t updateRate;
     int logLevel;
 
+    // TODO: scrap lazy initialization, and use a static ::init() instead.
     // lazily initialized
     static const Config& get();
 };

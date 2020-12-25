@@ -52,6 +52,7 @@ struct
 void
 Load(const std::string& path)
 {
+    // TODO: DRY
     fs::path file{ path };
 
     if (!fs::exists(file)) {

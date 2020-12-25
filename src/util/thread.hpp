@@ -15,6 +15,7 @@ public:
       : thread_(std::forward<Args>(args)...)
     {}
 
+    // TODO: move should join the old thread
     ScopedThread(ScopedThread&& other) { thread_ = std::move(other.thread_); }
 
     ~ScopedThread() { join(); }
@@ -26,10 +27,26 @@ public:
         return *this;
     }
 
-    std::thread& operator*() { return thread_; }
-    std::thread const& operator*() const { return thread_; }
-    std::thread* operator->() { return &thread_; }
-    std::thread const* operator->() const { return &thread_; }
+    std::thread&
+    operator*()
+    {
+        return thread_;
+    }
+    std::thread const&
+    operator*() const
+    {
+        return thread_;
+    }
+    std::thread*
+    operator->()
+    {
+        return &thread_;
+    }
+    std::thread const*
+    operator->() const
+    {
+        return &thread_;
+    }
 
     std::thread::id
     get_id() const

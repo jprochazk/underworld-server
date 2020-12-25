@@ -3,6 +3,8 @@
 
 #include "net/handler.hpp"
 
+// TODO: documentation
+
 namespace game {
 
 class World

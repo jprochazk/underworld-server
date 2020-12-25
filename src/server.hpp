@@ -14,7 +14,6 @@ public:
       , signals{ ioc, SIGINT, SIGTERM } // TODO: have more than 1 world at a time
       , worldManager{ game::CreateWorldManager(1u /* util::Config::get().threads */) }
       , context{ ioc, worldManager }
-      , updateInterval{ 1000. / static_cast<double>(util::Config::get().updateRate) }
     {
         util::log::Info("Server", "Initialized");
         signals.async_wait(SignalHandler{});
@@ -37,7 +36,6 @@ private:
     asio::signal_set signals;
     std::shared_ptr<game::WorldManager> worldManager;
     net::Context context;
-    double updateInterval;
 }; // class Server
 
 #endif // SERVER_SERVER_HPP_

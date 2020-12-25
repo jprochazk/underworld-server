@@ -7,6 +7,7 @@
 
 namespace net {
 
+// TODO: place this in the header file instead
 constexpr size_t MAX_MESSAGE_SIZE = 256;
 
 class SocketImpl final
@@ -40,6 +41,7 @@ public:
         handler_->onClose(id_);
     }
 
+    // TODO: token doesn't need to be passed here or sent back...
     virtual void
     open(http::request<http::string_body> req, std::string token) override
     {
