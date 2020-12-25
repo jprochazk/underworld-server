@@ -9,6 +9,7 @@ add_requires("CONAN::nlohmann_json/3.9.1", { alias = "nlohmann_json" })
 add_requires("CONAN::glm/0.9.9.8", { alias = "glm" })
 add_requires("CONAN::gtest/1.10.0", { alias = "gtest" })
 add_requires("CONAN::sol2/3.2.2", { alias = "sol2" })
+--add_requires("CONAN::libpqxx/7.2.1", { alias = "libpqxx" })
 
 target("server")
     set_kind("binary")
@@ -16,7 +17,9 @@ target("server")
     
     set_pcxxheader("src/pch.h")
 
-    add_files("src/**.cpp")
+    add_files(
+        "src/pch.cpp",
+        "src/**.cpp")
     add_includedirs("src")
 
     if is_plat("linux") then
@@ -46,10 +49,11 @@ target("tests")
 
     -- src files
     add_files(
+        "src/pch.cpp",
         "src/game/**.cpp",
         "src/net/**.cpp",
         "src/util/**.cpp",
-        "src/signal.cpp")
+        "src/server.cpp")
     add_includedirs("src")
 
     -- test files

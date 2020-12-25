@@ -1,5 +1,8 @@
-#include "signal.hpp"
 #include "pch.h"
+
+#include "signal.hpp"
+
+namespace util {
 
 std::atomic_bool SignalHandler::exit = false;
 
@@ -10,3 +13,5 @@ SignalHandler::operator()(const boost::system::error_code& ec, int /* signal */)
         exit = true;
     }
 }
+
+} // namespace util

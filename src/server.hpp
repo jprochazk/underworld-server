@@ -3,7 +3,6 @@
 #ifndef SERVER_SERVER_HPP_
 #define SERVER_SERVER_HPP_
 
-#include "signal.hpp"
 #include "util/util.hpp"
 
 namespace game {

@@ -9,6 +9,7 @@
 #include "log.hpp"
 #include "json.hpp"
 #include "config.hpp"
+#include "signal.hpp"
 // clang-format on
 
 #endif // SERVER_UTIL_UTIL_HPP_

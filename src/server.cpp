@@ -29,7 +29,7 @@ Server::Server(Config config)
                                   world->getHandler()) }
 {
     util::log::Info("Server", "Initialized");
-    signals.async_wait(SignalHandler{});
+    signals.async_wait(util::SignalHandler{});
 
     iocThread = std::thread([&] {
         listener->open();
@@ -45,7 +45,7 @@ Server::run()
     // TODO: provide another way to terminate the server
     auto interval = 1000.0 / static_cast<double>(config.updateRate);
     auto last = util::time::Now();
-    while (!SignalHandler::exit) {
+    while (!util::SignalHandler::exit) {
         // 1 tick = 1000 ms
         auto now = util::time::Now();
         auto diff = (now - last).count();
