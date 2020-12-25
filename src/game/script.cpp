@@ -1,14 +1,8 @@
+#include "pch.h"
+
 #include "game/script.hpp"
-#include "sol/forward.hpp"
 #include "util/log.hpp"
 #include "util/time.hpp"
-#include <shared_mutex>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
-
-#include <filesystem>
-namespace fs = std::filesystem;
 
 namespace game {
 
@@ -39,51 +33,14 @@ Initialize(sol::state& state)
     log["critical"] = [](std::string message) -> void { util::log::Critical("LUA", "{}", message); };
 }
 
-struct
-{
-    sol::state state;
-    struct
-    {
-        std::shared_mutex mutex;
-        std::unordered_map<std::string, sol::bytecode> storage;
-    } scripts;
-} global;
-
+// change all '\' to '/'
 void
-Load(const std::string& path)
+normalize_path_separators(std::string& path)
 {
-    // TODO: DRY
-    fs::path file{ path };
-
-    if (!fs::exists(file)) {
-        throw std::runtime_error{ fmt::format("{} does not exist", path) };
-    }
-
-    if (fs::is_directory(file)) {
-        for (auto it = fs::directory_iterator{ file }; it != fs::directory_iterator{}; ++it) {
-            if (it->is_directory()) {
-                Load(it->path().string());
-            } else if (it->is_regular_file() && it->path().has_extension() &&
-                       it->path().extension() == fs::path{ ".lua" }) {
-                auto path = it->path().string();
-                auto result = global.state.load_file(path);
-                if (!result.valid()) {
-                    throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
-                }
-
-                std::unique_lock lock{ global.scripts.mutex };
-                global.scripts.storage.insert_or_assign(path, (sol::safe_function{ result }).dump());
-            }
+    for (size_t i = 0; i < path.size(); i++) {
+        if (path[i] == '\\') {
+            path[i] = '/';
         }
-    } else if (fs::is_regular_file(file)) {
-        auto path = file.string();
-        auto result = global.state.load_file(path);
-        if (!result.valid()) {
-            throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
-        }
-
-        std::unique_lock lock{ global.scripts.mutex };
-        global.scripts.storage.insert_or_assign(path, (sol::safe_function{ result }).dump());
     }
 }
 
@@ -95,25 +52,49 @@ Context::Context()
 }
 
 void
-Context::retrieve(const std::string& path)
+Context::load_file(const std::string& path)
 {
-    std::shared_lock lock{ global.scripts.mutex };
-    if (global.scripts.storage.find(path) == global.scripts.storage.end()) {
-        // because Load also locks, we have to unlock here to avoid a deadlock
-        lock.unlock();
-        Load(path);
-        // and then lock again to ensure thread safety
-        lock.lock();
+    auto bytecode = this->state.load_file(path);
+    if (!bytecode.valid()) {
+        throw std::runtime_error{ fmt::format("File \"{}\" is not a valid script", path) };
     }
 
-    sol::safe_function loaded = state.load(global.scripts.storage.at(path).as_string_view());
-    cache.insert_or_assign(path, loaded);
+    this->cache.emplace(path, sol::safe_function{ bytecode });
+}
+
+void
+Context::load(const std::string& path)
+{
+    if (!fs::exists(path)) {
+        throw std::runtime_error{ fmt::format("File \"{}\" does not exist", path) };
+    }
+    if (fs::is_regular_file(path)) {
+        load_file(path);
+    } else if (fs::is_directory(path)) {
+        for (auto const& entry : fs::recursive_directory_iterator(path)) {
+            if (fs::is_regular_file(entry) && entry.path().extension() == ".lua") {
+                auto entry_path = entry.path().string();
+                normalize_path_separators(entry_path);
+                load_file(entry_path);
+            }
+        }
+    }
+}
+
+Context::Script&
+Context::get(const std::string& path)
+{
+    auto script = this->cache.find(path);
+    if (script == this->cache.end()) {
+        throw std::runtime_error{ fmt::format("Script \"{}\" is not loaded", path) };
+    }
+    return script->second;
 }
 
 sol::safe_function_result
 Context::eval(const std::string& code)
 {
-    return state.safe_script(code);
+    return this->state.safe_script(code);
 }
 
 } // namespace script

@@ -1,10 +1,10 @@
-#include "listener.hpp"
+#include "pch.h"
+
 #include "boost/beast/core/bind_handler.hpp"
+#include "listener.hpp"
 #include "net/handler.hpp"
 #include "net/socket.hpp"
 #include "util/log.hpp"
-#include <chrono>
-#include <memory>
 
 namespace net {
 
@@ -89,14 +89,14 @@ class ListenerImpl final
 {
     asio::io_context& ioc_;
     tcp::acceptor acceptor_;
-    std::shared_ptr<Router> router_;
+    std::shared_ptr<Handler> handler_;
     uint32_t idseq_;
 
 public:
-    ListenerImpl(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Router> router)
+    ListenerImpl(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Handler> handler)
       : ioc_{ ioc }
       , acceptor_{ ioc }
-      , router_{ router }
+      , handler_{ handler }
       , idseq_{ 0 }
     {
 
@@ -161,7 +161,7 @@ private:
             return fail("onAccept", ec);
         }
 
-        std::make_shared<Authenticator>(idseq_++, std::move(socket), router_->select())->run();
+        std::make_shared<Authenticator>(idseq_++, std::move(socket), handler_)->run();
 
         acceptor_.async_accept(asio::make_strand(ioc_),
                                beast::bind_front_handler(&ListenerImpl::onAccept, shared_from_this()));
@@ -169,9 +169,9 @@ private:
 }; // class ListenerImpl
 
 std::shared_ptr<Listener>
-CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Router> router)
+CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Handler> handler)
 {
-    return std::make_shared<ListenerImpl>(ioc, endpoint, router);
+    return std::make_shared<ListenerImpl>(ioc, endpoint, handler);
 }
 
 } // namespace net

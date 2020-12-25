@@ -1,12 +1,11 @@
+#include "pch.h"
+
 #ifndef SERVER_UTIL_TIME_HPP_
 #define SERVER_UTIL_TIME_HPP_
 
-#include <chrono>
-#include <cstddef>
 #include <iomanip>
 #include <ratio>
 #include <sstream>
-#include <string>
 
 namespace util {
 namespace time {

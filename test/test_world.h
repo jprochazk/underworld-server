@@ -1,3 +1,4 @@
+#include "pch.h"
 
 // update -> add player
 // update -> player msg
@@ -44,7 +45,7 @@ struct TestSocket final : public net::Socket
 TEST(World, Connect)
 {
     util::log::SetLevel(util::log::Level::Error);
-    auto world = game::CreateWorld(0u);
+    auto world = game::CreateWorld();
     auto handler = world->getHandler();
 
     auto socket = std::make_shared<TestSocket>();
@@ -55,7 +56,7 @@ TEST(World, Connect)
 TEST(World, Message)
 {
     util::log::SetLevel(util::log::Level::Error);
-    auto world = game::CreateWorld(0u);
+    auto world = game::CreateWorld();
     auto handler = world->getHandler();
 
     auto socket = std::make_shared<TestSocket>();
@@ -82,7 +83,7 @@ TEST(World, Message)
 TEST(World, Close)
 {
     util::log::SetLevel(util::log::Level::Error);
-    auto world = game::CreateWorld(0u);
+    auto world = game::CreateWorld();
     auto handler = world->getHandler();
 
     auto socket = std::make_shared<TestSocket>();
@@ -93,21 +94,4 @@ TEST(World, Close)
     handler->onClose(0u);
     world->update();
     EXPECT_EQ(world->size(), 0u);
-}
-
-TEST(WorldManager, Select)
-{
-    size_t numWorlds = 2u;
-    auto wmgr = game::CreateWorldManager(numWorlds);
-
-    for (size_t i = 0; i < numWorlds; ++i) {
-        auto socket = std::make_shared<TestSocket>();
-        auto handler = wmgr->select();
-        handler->onOpen(0u, socket);
-        wmgr->get(handler->id())->update();
-    }
-
-    for (size_t i = 0; i < numWorlds; ++i) {
-        EXPECT_EQ(wmgr->get(i)->size(), 1u);
-    }
 }

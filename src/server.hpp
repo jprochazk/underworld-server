@@ -1,41 +1,41 @@
+#include "pch.h"
+
 #ifndef SERVER_SERVER_HPP_
 #define SERVER_SERVER_HPP_
 
-#include "game/world.hpp"
-#include "net/net.hpp"
 #include "signal.hpp"
 #include "util/util.hpp"
+
+namespace game {
+class World;
+}
+namespace net {
+class Listener;
+}
 
 class Server
 {
 public:
-    Server()
-      : ioc{ util::Config::get().threads }
-      , signals{ ioc, SIGINT, SIGTERM } // TODO: have more than 1 world at a time
-      , worldManager{ game::CreateWorldManager(1u /* util::Config::get().threads */) }
-      , context{ ioc, worldManager }
+    struct Config
     {
-        util::log::Info("Server", "Initialized");
-        signals.async_wait(SignalHandler{});
-    }
+        std::string address;
+        uint16_t port;
+        uint16_t updateRate;
+        int logLevel;
 
-    void
-    run()
-    {
-        util::log::Info("Server", "Running");
-        worldManager->start();
-        // infinite loop that simply does nothing other than wait for the signal handler to be called
-        // TODO: provide another way to terminate the server
-        while (!SignalHandler::exit) {
-        }
-        worldManager->stop();
-    }
+        static Config load(const std::string& path);
+    };
+
+    Server(Config config);
+    void run();
 
 private:
+    Config config;
     asio::io_context ioc;
+    util::ScopedThread iocThread;
     asio::signal_set signals;
-    std::shared_ptr<game::WorldManager> worldManager;
-    net::Context context;
+    std::shared_ptr<game::World> world;
+    std::shared_ptr<net::Listener> listener;
 }; // class Server
 
 #endif // SERVER_SERVER_HPP_

@@ -1,8 +1,7 @@
-#include "game/player.hpp"
+#include "pch.h"
 
+#include "game/player.hpp"
 #include "net/socket.hpp"
-#include <cstdint>
-#include <vector>
 
 namespace game {
 

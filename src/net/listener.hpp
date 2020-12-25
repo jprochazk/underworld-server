@@ -1,14 +1,13 @@
+#include "pch.h"
+
 #ifndef SERVER_NET_LISTENER_HPP_
 #define SERVER_NET_LISTENER_HPP_
-
-#include "net/boost.hpp"
-#include <memory>
 
 // TODO: documentation
 
 namespace net {
 
-class Router;
+class Handler;
 
 class Listener
 {
@@ -18,7 +17,9 @@ public:
     virtual void open() = 0;
 }; // class Listener
 
-std::shared_ptr<Listener> CreateListener(asio::io_context& ioc, tcp::endpoint endpoint, std::shared_ptr<Router> router);
+std::shared_ptr<Listener> CreateListener(asio::io_context& ioc,
+                                         tcp::endpoint endpoint,
+                                         std::shared_ptr<Handler> handler);
 
 } // namespace net
 

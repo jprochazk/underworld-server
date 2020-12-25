@@ -13,6 +13,8 @@ add_requires("CONAN::sol2/3.2.2", { alias = "sol2" })
 target("server")
     set_kind("binary")
     set_languages("cxx17")
+    
+    set_pcxxheader("src/pch.h")
 
     add_files("src/**.cpp")
     add_includedirs("src")
@@ -39,6 +41,8 @@ target("server")
 target("tests")
     set_kind("binary")
     set_languages("cxx17")
+    
+    set_pcxxheader("src/pch.h")
 
     -- src files
     add_files(

@@ -1,3 +1,4 @@
+#include "pch.h"
 #define GAME_TEST_ENVIRONMENT
 #include <gtest/gtest.h>
 

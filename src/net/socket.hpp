@@ -1,10 +1,7 @@
+#include "pch.h"
+
 #ifndef SERVER_NET_SOCKET_HPP_
 #define SERVER_NET_SOCKET_HPP_
-
-#include "net/boost.hpp"
-#include <cstdint>
-#include <memory>
-#include <vector>
 
 // TODO: documentation
 

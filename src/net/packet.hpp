@@ -1,16 +1,13 @@
+#include "pch.h"
+
 #ifndef SERVER_NET_PACKET_HPP_
 #define SERVER_NET_PACKET_HPP_
 
 #include "net/endian.hpp"
 #include "util/log.hpp"
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <type_traits>
-#include <vector>
 
 #ifndef NDEBUG
-#    include <stdexcept>
+#include <stdexcept>
 #endif
 
 // TODO: documentation

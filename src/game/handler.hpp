@@ -1,8 +1,7 @@
+#include "pch.h"
+
 #ifndef SERVER_GAME_HANDLER_HPP_
 #define SERVER_GAME_HANDLER_HPP_
-
-#include <cstddef>
-#include <cstdint>
 
 /// To add new Opcodes + Handlers:
 /// 1. Add the opcode into the Opcode enum

@@ -1,10 +1,7 @@
+#include "pch.h"
+
 #ifndef SERVER_GAME_PLAYER_HPP_
 #define SERVER_GAME_PLAYER_HPP_
-
-#include <cstdint>
-#include <entt/entt.hpp>
-#include <memory>
-#include <vector>
 
 namespace net {
 class Socket;

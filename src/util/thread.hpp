@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #ifndef SERVER_UTIL_THREAD_HPP_
 #define SERVER_UTIL_THREAD_HPP_
 
@@ -10,20 +12,21 @@ class ScopedThread
     std::thread thread_;
 
 public:
+    ScopedThread() = default;
+    ~ScopedThread() { join(); }
+
+    ScopedThread(ScopedThread&& other) = delete;
+    ScopedThread(const ScopedThread& other) = delete;
+
     template<class... Args>
-    explicit ScopedThread(Args&&... args)
+    ScopedThread(Args&&... args)
       : thread_(std::forward<Args>(args)...)
     {}
 
-    // TODO: move should join the old thread
-    ScopedThread(ScopedThread&& other) { thread_ = std::move(other.thread_); }
-
-    ~ScopedThread() { join(); }
-
     ScopedThread&
-    operator=(ScopedThread&& other)
+    operator=(std::thread&& other)
     {
-        thread_ = std::move(other.thread_);
+        thread_ = std::move(other);
         return *this;
     }
 

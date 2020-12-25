@@ -1,8 +1,7 @@
+#include "pch.h"
+
 #ifndef SERVER_UTIL_LOG_HPP_
 #define SERVER_UTIL_LOG_HPP_
-
-#include <spdlog/spdlog.h>
-#include <type_traits>
 
 namespace util {
 namespace log {

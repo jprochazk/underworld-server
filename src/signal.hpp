@@ -1,7 +1,6 @@
+#include "pch.h"
 #ifndef SERVER_SIGNAL_HPP_
 #define SERVER_SIGNAL_HPP_
-
-#include <atomic>
 
 // TODO: move signal to util::
 
