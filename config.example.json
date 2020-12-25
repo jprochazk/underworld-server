@@ -1,7 +1,6 @@
 {
     "address": "127.0.0.1",
     "port": 8080,
-    "threads": 1,
     "updateRate": 60,
     "logLevel": "info"
 }
