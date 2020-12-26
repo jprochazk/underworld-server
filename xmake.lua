@@ -9,7 +9,25 @@ add_requires("CONAN::nlohmann_json/3.9.1", { alias = "nlohmann_json" })
 add_requires("CONAN::glm/0.9.9.8", { alias = "glm" })
 add_requires("CONAN::gtest/1.10.0", { alias = "gtest" })
 add_requires("CONAN::sol2/3.2.2", { alias = "sol2" })
---add_requires("CONAN::libpqxx/7.2.1", { alias = "libpqxx" })
+add_requires("CONAN::libpqxx/7.3.0", { alias = "libpqxx" })
+
+-- This is needed, because for some reason, they aren't linked automatically
+-- TODO: investigate, submit an issue.
+function add_missing_system_links()
+    if is_plat("linux") then
+        add_links(
+            "pthread",
+            "dl")
+    elseif is_plat("windows") then 
+        add_links(
+            "ws2_32", 
+            "secur32", 
+            "advapi32", 
+            "shell32", 
+            "crypt32", 
+            "wldap32")
+    end
+end
 
 target("server")
     set_kind("binary")
@@ -22,10 +40,7 @@ target("server")
         "src/**.cpp")
     add_includedirs("src")
 
-    if is_plat("linux") then
-        add_ldflags("-lpthread")
-        add_ldflags("-ldl")
-    end
+    add_missing_system_links()
 
     add_packages(
         "boost", 
@@ -36,7 +51,8 @@ target("server")
         "nlohmann_json", 
         "glm", 
         "gtest", 
-        "sol2")
+        "sol2",
+        "libpqxx")
 
     set_rundir("$(projectdir)")
 -- target("server")
@@ -60,10 +76,7 @@ target("tests")
     add_files("test/main.cpp")
     add_includedirs("test")
 
-    if is_plat("linux") then
-        add_ldflags("-lpthread")
-        add_ldflags("-ldl")
-    end
+    add_missing_system_links()
     
     add_packages(
         "boost", 
@@ -74,7 +87,8 @@ target("tests")
         "nlohmann_json", 
         "glm", 
         "gtest", 
-        "sol2")
+        "sol2",
+        "libpqxx")
 
     set_rundir("$(projectdir)")
 -- target("tests")
