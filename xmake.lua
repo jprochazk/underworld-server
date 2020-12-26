@@ -16,7 +16,7 @@ add_requires("CONAN::libpqxx/7.3.0", { alias = "libpqxx" })
 function add_missing_system_links()
     if is_plat("linux") then
         add_ldflags("-lpthread")
-	add_ldflags("-ldl")
+        add_ldflags("-ldl")
     elseif is_plat("windows") then 
         add_links(
             "ws2_32", 
