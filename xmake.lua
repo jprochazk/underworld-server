@@ -31,7 +31,7 @@ end
 
 target("server")
     set_kind("binary")
-    set_languages("cxx17")
+    set_languages("cxx20")
     set_rundir("$(projectdir)")
     
     set_pcxxheader("src/server/pch.h")
@@ -59,7 +59,7 @@ target("server")
 
 target("tests")
     set_kind("binary")
-    set_languages("cxx17")
+    set_languages("cxx20")
     set_rundir("$(projectdir)")
     
     -- TODO: its own precompiled header ?
