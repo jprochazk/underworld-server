@@ -7,6 +7,7 @@
 #include "test_packet.h"
 #include "test_world.h"
 #include "test_script.h"
+#include "test_db.h"
 //#include "test_ppga.h"
 // clang-format on
 

@@ -11,12 +11,6 @@ add_requires("CONAN::gtest/1.10.0", { alias = "gtest" })
 add_requires("CONAN::sol2/3.2.2", { alias = "sol2" })
 add_requires("CONAN::libpq/13.1", { alias = "libpq" })
 
--- TODO: improve compilation times:
---      * remove boost
---          1. move src/server/net into a separate static lib
---          2. abandon boost:: usage in the game server
---      * remove precompiled headers
-
 -- This is needed, because for some reason, boost and libpq
 -- packages don't link these automatically.
 -- TODO: investigate
@@ -38,6 +32,7 @@ end
 target("server")
     set_kind("binary")
     set_languages("cxx17")
+    set_rundir("$(projectdir)")
     
     set_pcxxheader("src/server/pch.h")
 
@@ -60,12 +55,19 @@ target("server")
         "sol2",
         "libpq")
 
-    set_rundir("$(projectdir)")
+    -- https://github.com/yandex/ozo#compatibilities
+    add_defines(
+        "BOOST_HANA_CONFIG_ENABLE_STRING_UDL",
+        "BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT");
+
+    -- include yandex/ozo
+    add_includedirs("vendor/ozo/include")
 -- target("server")
 
 target("tests")
     set_kind("binary")
     set_languages("cxx17")
+    set_rundir("$(projectdir)")
     
     -- TODO: its own precompiled header ?
     set_pcxxheader("src/server/pch.h")
@@ -79,7 +81,6 @@ target("tests")
         "src/server/server.cpp",
         "src/test/main.cpp")
     add_includedirs(
-        "src/db",
         "src/server",
         "src/test")
 
@@ -97,5 +98,6 @@ target("tests")
         "sol2",
         "libpq")
 
-    set_rundir("$(projectdir)")
+    -- include yandex/ozo
+    add_includedirs("vendor/ozo/include")
 -- target("tests")
