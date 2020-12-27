@@ -55,13 +55,6 @@ target("server")
         "sol2",
         "libpq")
 
-    -- https://github.com/yandex/ozo#compatibilities
-    add_defines(
-        "BOOST_HANA_CONFIG_ENABLE_STRING_UDL",
-        "BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT");
-
-    -- include yandex/ozo
-    add_includedirs("vendor/ozo/include")
 -- target("server")
 
 target("tests")
@@ -97,7 +90,4 @@ target("tests")
         "gtest", 
         "sol2",
         "libpq")
-
-    -- include yandex/ozo
-    add_includedirs("vendor/ozo/include")
 -- target("tests")
