@@ -11,7 +11,7 @@ TEST(Script, Load_File)
     using namespace game;
 
     script::Context context;
-    context.load("test/scripts/test.lua");
+    context.load("src/test/scripts/test.lua");
 }
 
 TEST(Script, Load_Directory)
@@ -20,7 +20,7 @@ TEST(Script, Load_Directory)
     using namespace game;
 
     script::Context context;
-    context.load("test/scripts");
+    context.load("src/test/scripts");
 }
 
 TEST(Script, Context)
@@ -29,7 +29,7 @@ TEST(Script, Context)
     using namespace game;
 
     script::Context context;
-    context.load("test/scripts");
+    context.load("src/test/scripts");
 
     auto result = context.eval("return string.format(\"pi = %.4f\", math.pi)");
     EXPECT_EQ(result.get<std::string>(), std::string{ "pi = 3.1416" });
@@ -42,16 +42,16 @@ TEST(Script, Get)
 
     // pre-load scripts
     script::Context context;
-    context.load("test/scripts");
+    context.load("src/test/scripts");
 
     // try to execute a script
     auto now = util::time::Now();
-    util::time::Date result = context.get("test/scripts/test.lua")();
+    util::time::Date result = context.get("src/test/scripts/test.lua")();
     EXPECT_TRUE(result > now);
 
     // and one from a nested directory
     now = util::time::Now();
-    result = context.get("test/scripts/test_dir/test.lua")();
+    result = context.get("src/test/scripts/test_dir/test.lua")();
     EXPECT_TRUE(result > now);
 }
 
@@ -61,7 +61,7 @@ TEST(Script, API_Date)
     using namespace game;
 
     script::Context context;
-    context.load("test/scripts");
+    context.load("src/test/scripts");
 
     auto now = util::time::Now();
     util::time::Date result = context.eval("return util.time.now()");

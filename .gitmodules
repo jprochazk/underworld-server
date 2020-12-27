@@ -1,0 +1,3 @@
+[submodule "vendor/ozo"]
+	path = vendor/ozo
+	url = https://github.com/yandex/ozo.git

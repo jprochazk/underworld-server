@@ -2,5 +2,11 @@
     "address": "127.0.0.1",
     "port": 8080,
     "updateRate": 60,
-    "logLevel": "info"
+    "database": {
+        "name": "uw_game",
+        "host": "localhost",
+        "port": 5432,
+        "user": "postgres",
+        "password": "root"
+    }
 }

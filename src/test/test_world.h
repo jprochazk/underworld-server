@@ -6,11 +6,10 @@
 
 #include <gtest/gtest.h>
 
-#include "game/handler.hpp"
+#include "game/opcode.hpp"
 #include "game/world.hpp"
 #include "net/packet.hpp"
 #include "net/socket.hpp"
-#include "util/log.hpp"
 
 struct TestSocket final : public net::Socket
 {
@@ -44,7 +43,6 @@ struct TestSocket final : public net::Socket
 
 TEST(World, Connect)
 {
-    util::log::SetLevel(util::log::Level::Error);
     auto world = game::CreateWorld();
     auto handler = world->getHandler();
 
@@ -55,7 +53,6 @@ TEST(World, Connect)
 }
 TEST(World, Message)
 {
-    util::log::SetLevel(util::log::Level::Error);
     auto world = game::CreateWorld();
     auto handler = world->getHandler();
 
@@ -65,7 +62,7 @@ TEST(World, Message)
     EXPECT_EQ(world->size(), 1u);
 
     net::Packet pkt;
-    pkt.write(game::Opcode::TEST);
+    pkt.write(game::Opcode::Test);
     pkt.write(static_cast<uint16_t>(1u));
 
     handler->onMessage(0u, pkt.data(), pkt.size());
@@ -82,7 +79,6 @@ TEST(World, Message)
 }
 TEST(World, Close)
 {
-    util::log::SetLevel(util::log::Level::Error);
     auto world = game::CreateWorld();
     auto handler = world->getHandler();
 

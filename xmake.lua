@@ -9,10 +9,17 @@ add_requires("CONAN::nlohmann_json/3.9.1", { alias = "nlohmann_json" })
 add_requires("CONAN::glm/0.9.9.8", { alias = "glm" })
 add_requires("CONAN::gtest/1.10.0", { alias = "gtest" })
 add_requires("CONAN::sol2/3.2.2", { alias = "sol2" })
-add_requires("CONAN::libpqxx/7.3.0", { alias = "libpqxx" })
+add_requires("CONAN::libpq/13.1", { alias = "libpq" })
 
--- This is needed, because for some reason, they aren't linked automatically
--- TODO: investigate, submit an issue.
+-- TODO: improve compilation times:
+--      * remove boost
+--          1. move src/server/net into a separate static lib
+--          2. abandon boost:: usage in the game server
+--      * remove precompiled headers
+
+-- This is needed, because for some reason, boost and libpq
+-- packages don't link these automatically.
+-- TODO: investigate
 function add_missing_system_links()
     if is_plat("linux") then
         add_ldflags("-lpthread")
@@ -32,12 +39,12 @@ target("server")
     set_kind("binary")
     set_languages("cxx17")
     
-    set_pcxxheader("src/pch.h")
+    set_pcxxheader("src/server/pch.h")
 
     add_files(
-        "src/pch.cpp",
-        "src/**.cpp")
-    add_includedirs("src")
+        "src/server/pch.cpp",
+        "src/server/**.cpp")
+    add_includedirs("src/server")
 
     add_missing_system_links()
 
@@ -51,7 +58,7 @@ target("server")
         "glm", 
         "gtest", 
         "sol2",
-        "libpqxx")
+        "libpq")
 
     set_rundir("$(projectdir)")
 -- target("server")
@@ -60,20 +67,21 @@ target("tests")
     set_kind("binary")
     set_languages("cxx17")
     
-    set_pcxxheader("src/pch.h")
+    -- TODO: its own precompiled header ?
+    set_pcxxheader("src/server/pch.h")
 
     -- src files
     add_files(
-        "src/pch.cpp",
-        "src/game/**.cpp",
-        "src/net/**.cpp",
-        "src/util/**.cpp",
-        "src/server.cpp")
-    add_includedirs("src")
-
-    -- test files
-    add_files("test/main.cpp")
-    add_includedirs("test")
+        "src/server/game/**.cpp",
+        "src/server/net/**.cpp",
+        "src/server/util/**.cpp",
+        "src/server/pch.cpp",
+        "src/server/server.cpp",
+        "src/test/main.cpp")
+    add_includedirs(
+        "src/db",
+        "src/server",
+        "src/test")
 
     add_missing_system_links()
     
@@ -87,7 +95,7 @@ target("tests")
         "glm", 
         "gtest", 
         "sol2",
-        "libpqxx")
+        "libpq")
 
     set_rundir("$(projectdir)")
 -- target("tests")
